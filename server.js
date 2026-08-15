@@ -16,7 +16,7 @@ if (fs.existsSync("data.json")) {
   state = JSON.parse(fs.readFileSync("data.json", "utf8"));
 }
 
-const BREAK_AFTER_MS = 10 * 1000; // 10 sec for testing — change to 50 * 60 * 1000 before submitting
+const BREAK_AFTER_MS = 10 * 1000; // 10 sec for testing but change to 50 * 60 * 1000 before submitting
 
 // writes the notepad to a file so it survives restarts
 function save() {
