@@ -1,7 +1,9 @@
 const express = require("express");
 const fs = require("fs");
 const app = express();
+const cors = require("cors");
 
+app.use(cors());
 // the notepad — everything the app remembers
 let state = {
   status: "idle",
