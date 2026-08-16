@@ -71,9 +71,13 @@ export const FocusSessionModal: React.FC = () => {
       {/* Main Centered Floating Card */}
       <div className="w-full max-w-md my-auto pt-4 pb-2">
         <div className="relative rounded-[32px] bg-[#FFFDF9] border border-[#EAE6DC] p-6 sm:p-8 shadow-xl text-center flex flex-col items-center">
-          {/* Subtle Decorative Leaf Sprigs in Corners */}
-          <div className="absolute top-3 left-4 text-[#C2D8B9] text-xs pointer-events-none">🌿</div>
-          <div className="absolute top-3 right-4 text-[#C2D8B9] text-xs pointer-events-none">🌿</div>
+          {/* Subtle Decorative Leaf Sprigs & Sparkles in Corners */}
+          <div className="absolute top-3 left-4 pointer-events-none">
+            <img src="/assets/trimmed/Extra decor/yellow_stars.png" alt="Stars" className="w-5 h-5 object-contain opacity-80" />
+          </div>
+          <div className="absolute top-3 right-4 pointer-events-none">
+            <img src="/assets/trimmed/Extra decor/yellow_stars.png" alt="Stars" className="w-5 h-5 object-contain opacity-80" />
+          </div>
 
           {/* Session Header Tag */}
           <div className="flex items-center gap-2 mb-2">

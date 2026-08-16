@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useGarden } from '../../context/GardenContext';
 import { useKinetic } from '../../context/KineticContext';
 import { CompanionAvatar } from './CompanionAvatar';
 import { Timer } from 'lucide-react';
 
 export const MoodGardenCanvas: React.FC = () => {
+  const { bloomFactor } = useGarden();
   const { currentMood } = useKinetic();
 
   const [activeRipple, setActiveRipple] = useState<{ x: number; y: number; id: number } | null>(null);
+  const [walkX, setWalkX] = useState<number>(0);
+  const [walkDir, setWalkDir] = useState<'left' | 'right'>('right');
+
+  // Ambient gentle roaming along the path
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWalkX(prev => {
+        if (prev >= 20) {
+          setWalkDir('left');
+          return prev - 4;
+        } else if (prev <= -20) {
+          setWalkDir('right');
+          return prev + 4;
+        }
+        return walkDir === 'right' ? prev + 3 : prev - 3;
+      });
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [walkDir]);
 
   const handleGardenClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -33,27 +55,62 @@ export const MoodGardenCanvas: React.FC = () => {
 
   const moodPill = getMoodPill();
 
+  // Dynamic Plant Asset based on bloom health
+  const getPlantAsset = () => {
+    if (bloomFactor >= 0.8) return '/assets/trimmed/Plant_Life/blooming.png';
+    if (bloomFactor >= 0.5) return '/assets/trimmed/Plant_Life/growing.png';
+    if (bloomFactor >= 0.25) return '/assets/trimmed/Plant_Life/seedling.png';
+    return '/assets/trimmed/Plant_Life/wilted.png';
+  };
+
   return (
     <div
       onClick={handleGardenClick}
       className="relative w-full h-[400px] sm:h-[450px] rounded-3xl overflow-hidden shadow-sm border border-[#DCE8D8] select-none cursor-pointer group"
       style={{
-        background: 'linear-gradient(180deg, #7EA2C6 0%, #90B4D8 35%, #A7C7E7 60%)',
+        background:
+          currentMood === 'tired'
+            ? 'linear-gradient(180deg, #1E293B 0%, #334155 45%, #475569 70%)'
+            : currentMood === 'meh'
+            ? 'linear-gradient(180deg, #64748B 0%, #94A3B8 45%, #CBD5E1 70%)'
+            : 'linear-gradient(180deg, #7EA2C6 0%, #90B4D8 35%, #A7C7E7 60%)',
       }}
     >
-      {/* Sun */}
-      <div className="absolute top-4 right-14 w-16 h-16 rounded-full bg-[#FEF08A]/40 blur-md pointer-events-none" />
-      <div className="absolute top-6 right-16 w-12 h-12 rounded-full bg-[#FEF3C7] opacity-80 pointer-events-none" />
+      {/* Sun / Moon / Weather Asset */}
+      {currentMood === 'tired' ? (
+        <div className="absolute top-4 right-8 z-10 animate-float-gentle pointer-events-none">
+          <img
+            src="/assets/trimmed/Extra decor/moon.png"
+            alt="Moon"
+            className="w-14 h-14 object-contain drop-shadow-md"
+          />
+        </div>
+      ) : currentMood === 'meh' ? (
+        <div className="absolute top-3 right-6 z-10 animate-float-gentle pointer-events-none">
+          <img
+            src="/assets/trimmed/Extra decor/rain_cloud.png"
+            alt="Rain Cloud"
+            className="w-20 h-20 object-contain drop-shadow-sm"
+          />
+        </div>
+      ) : (
+        <div className="absolute top-3 right-6 z-10 animate-float-gentle pointer-events-none">
+          <img
+            src="/assets/trimmed/Extra decor/sun.png"
+            alt="Sun"
+            className="w-16 h-16 object-contain drop-shadow-md"
+          />
+        </div>
+      )}
 
-      {/* Fluffy Clouds */}
+      {/* Fluffy Ambient Clouds */}
       <div className="absolute top-3 left-6 w-24 h-12 bg-white/75 rounded-full blur-[1px] pointer-events-none" />
-      <div className="absolute top-6 left-12 w-28 h-10 bg-white/70 rounded-full blur-[1px] pointer-events-none" />
-      <div className="absolute top-4 left-44 w-32 h-14 bg-white/60 rounded-full blur-[1px] pointer-events-none" />
+      <div className="absolute top-6 left-16 w-28 h-10 bg-white/70 rounded-full blur-[1px] pointer-events-none" />
 
       {/* Top HUD overlay matching Figma */}
-      <div className="absolute top-3.5 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+      <div className="absolute top-3.5 left-4 right-4 z-30 flex items-center justify-between pointer-events-none">
         {/* Left Timer Pill */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4A7C59]/80 backdrop-blur-sm text-white text-xs font-bold font-pixel tracking-wide border border-white/20 shadow-sm">
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4A7C59]/85 backdrop-blur-sm text-white text-xs font-bold font-pixel tracking-wide border border-white/20 shadow-sm">
           <Timer className="w-3.5 h-3.5" />
           <span>25m</span>
         </div>
@@ -65,7 +122,7 @@ export const MoodGardenCanvas: React.FC = () => {
         </div>
       </div>
 
-      {/* Ripple Animation on tap */}
+      {/* Click Ripple */}
       {activeRipple && (
         <div
           key={activeRipple.id}
@@ -79,8 +136,12 @@ export const MoodGardenCanvas: React.FC = () => {
         />
       )}
 
-      {/* Scenic Vector Landscape matching Figma Screenshot 3 */}
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 400 450">
+      {/* Rolling Hills Scenic Landscape Base */}
+      <svg
+        className="absolute inset-0 w-full h-full z-10 pointer-events-none"
+        preserveAspectRatio="none"
+        viewBox="0 0 400 450"
+      >
         <defs>
           <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#A4CCA0" />
@@ -97,155 +158,154 @@ export const MoodGardenCanvas: React.FC = () => {
         </defs>
 
         {/* Distant Hills Layer 1 */}
-        <path d="M -10 180 Q 80 120 200 155 T 410 130 L 410 450 L -10 450 Z" fill="url(#hillBack)" />
-
-        {/* Distant Trees */}
-        <g fill="#4A7545">
-          <ellipse cx="68" cy="140" rx="6" ry="12" />
-          <ellipse cx="130" cy="130" rx="7" ry="14" />
-          <ellipse cx="275" cy="130" rx="7" ry="13" />
-          <ellipse cx="330" cy="170" rx="9" ry="17" />
-          <ellipse cx="365" cy="160" rx="10" ry="19" />
-        </g>
+        <path d="M -10 170 Q 80 115 200 150 T 410 120 L 410 450 L -10 450 Z" fill="url(#hillBack)" />
 
         {/* Middle Hills Layer 2 */}
-        <path d="M -10 205 Q 120 160 260 195 T 410 175 L 410 450 L -10 450 Z" fill="url(#hillMid)" />
-
-        {/* Mid-ground Trees */}
-        <g fill="#3D683A">
-          <ellipse cx="30" cy="185" rx="12" ry="20" />
-          <ellipse cx="65" cy="195" rx="10" ry="16" />
-          <ellipse cx="108" cy="190" rx="11" ry="18" />
-        </g>
+        <path d="M -10 200 Q 120 155 260 190 T 410 170 L 410 450 L -10 450 Z" fill="url(#hillMid)" />
 
         {/* Foreground Meadow Base */}
-        <path d="M -10 230 Q 180 215 410 225 L 410 450 L -10 450 Z" fill="url(#grassFront)" />
+        <path d="M -10 225 Q 180 210 410 220 L 410 450 L -10 450 Z" fill="url(#grassFront)" />
 
-        {/* Winding Cobblestone / Dirt Path in Center */}
+        {/* Center Path */}
         <path
-          d="M 185 190 C 180 260 170 330 150 450 L 205 450 C 220 330 215 260 205 190 Z"
+          d="M 185 185 C 180 255 170 325 150 450 L 205 450 C 220 325 215 255 205 185 Z"
           fill="#D6C4A2"
           stroke="#C4B08C"
           strokeWidth="1.5"
         />
-
-        {/* Path Stepping Stones */}
-        <g fill="#E3D5B9" opacity="0.8">
-          <ellipse cx="193" cy="220" rx="8" ry="4" />
-          <ellipse cx="190" cy="250" rx="9" ry="5" />
-          <ellipse cx="186" cy="285" rx="10" ry="6" />
-          <ellipse cx="180" cy="325" rx="11" ry="6.5" />
-          <ellipse cx="174" cy="370" rx="13" ry="7" />
-          <ellipse cx="168" cy="415" rx="15" ry="8" />
-        </g>
-
-        {/* --- LEFT WOODEN TRELLIS WITH FLOWERS --- */}
-        <g transform="translate(40, 215)">
-          {/* Wood Lattice */}
-          <rect x="0" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="25" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="50" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="-4" y="8" width="62" height="5" fill="#C48E59" rx="1" />
-          <rect x="-4" y="24" width="62" height="5" fill="#C48E59" rx="1" />
-          <rect x="-4" y="40" width="62" height="5" fill="#C48E59" rx="1" />
-
-          {/* Climbing Blossom Foliage */}
-          <ellipse cx="28" cy="30" rx="32" ry="14" fill="#3D683A" />
-          {/* Pink and Lavender Flowers */}
-          <circle cx="10" cy="25" r="7" fill="#F472B6" />
-          <circle cx="10" cy="25" r="2.5" fill="#FDE047" />
-          <circle cx="28" cy="32" r="8" fill="#FBCFE8" />
-          <circle cx="28" cy="32" r="3" fill="#FDE047" />
-          <circle cx="45" cy="28" r="7.5" fill="#C4B5FD" />
-          <circle cx="45" cy="28" r="2.5" fill="#FDE047" />
-          <circle cx="20" cy="40" r="6" fill="#F472B6" />
-          <circle cx="36" cy="42" r="6" fill="#FBCFE8" />
-        </g>
-
-        {/* --- RIGHT WOODEN TRELLIS WITH FLOWERS --- */}
-        <g transform="translate(270, 215)">
-          {/* Wood Lattice */}
-          <rect x="0" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="25" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="50" y="0" width="6" height="50" fill="#C48E59" rx="1" />
-          <rect x="-4" y="8" width="62" height="5" fill="#C48E59" rx="1" />
-          <rect x="-4" y="24" width="62" height="5" fill="#C48E59" rx="1" />
-          <rect x="-4" y="40" width="62" height="5" fill="#C48E59" rx="1" />
-
-          {/* Climbing Blossom Foliage */}
-          <ellipse cx="28" cy="30" rx="32" ry="14" fill="#3D683A" />
-          {/* Pink and Purple Flowers */}
-          <circle cx="12" cy="28" r="8" fill="#C4B5FD" />
-          <circle cx="12" cy="28" r="3" fill="#FDE047" />
-          <circle cx="30" cy="24" r="7" fill="#F472B6" />
-          <circle cx="30" cy="24" r="2.5" fill="#FDE047" />
-          <circle cx="46" cy="32" r="7.5" fill="#FBCFE8" />
-          <circle cx="46" cy="32" r="2.5" fill="#FDE047" />
-          <circle cx="22" cy="38" r="6" fill="#FBCFE8" />
-          <circle cx="38" cy="40" r="6" fill="#F472B6" />
-        </g>
-
-        {/* --- BUTTERFLIES FLUTTERING --- */}
-        {/* Left Pink Butterfly */}
-        <g transform="translate(85, 205)" className="animate-flutter">
-          <ellipse cx="-4" cy="-4" rx="6" ry="8" fill="#FBCFE8" transform="rotate(-20 -4 -4)" />
-          <ellipse cx="4" cy="-4" rx="6" ry="8" fill="#FBCFE8" transform="rotate(20 4 -4)" />
-          <line x1="0" y1="-8" x2="0" y2="4" stroke="#4B5563" strokeWidth="1" />
-        </g>
-        {/* Right Lavender Butterfly */}
-        <g transform="translate(260, 220)" className="animate-flutter">
-          <ellipse cx="-4" cy="-4" rx="6" ry="8" fill="#DDD6FE" transform="rotate(-20 -4 -4)" />
-          <ellipse cx="4" cy="-4" rx="6" ry="8" fill="#DDD6FE" transform="rotate(20 4 -4)" />
-          <line x1="0" y1="-8" x2="0" y2="4" stroke="#4B5563" strokeWidth="1" />
-        </g>
-
-        {/* --- LITTLE LILY POND (Bottom Right) --- */}
-        <g transform="translate(320, 360)">
-          <ellipse cx="30" cy="18" rx="35" ry="16" fill="#7EADC7" stroke="#A4CDDD" strokeWidth="1.5" />
-          {/* Lily pad */}
-          <ellipse cx="25" cy="18" rx="10" ry="5" fill="#4B8845" />
-          <circle cx="28" cy="16" r="3" fill="#FDE047" />
-        </g>
-
-        {/* --- MUSHROOMS & WILD FLOWERS IN MEADOW --- */}
-        {/* Red Mushrooms */}
-        <g transform="translate(230, 245)">
-          <rect x="2" y="5" width="3" height="6" fill="#E2DDD0" />
-          <path d="M 0 5 Q 3.5 0 7 5 Z" fill="#EF4444" />
-          <circle cx="3.5" cy="3" r="0.7" fill="#FFFFFF" />
-        </g>
-        <g transform="translate(150, 310)">
-          <rect x="2" y="5" width="2.5" height="5" fill="#E2DDD0" />
-          <path d="M 0 5 Q 3 0 6 5 Z" fill="#EF4444" />
-          <circle cx="3" cy="3" r="0.6" fill="#FFFFFF" />
-        </g>
-
-        {/* Meadow Daisies */}
-        <circle cx="130" cy="275" r="3.5" fill="#FDE2E4" />
-        <circle cx="130" cy="275" r="1.2" fill="#FDE047" />
-        <circle cx="240" cy="290" r="3.5" fill="#E0AAFF" />
-        <circle cx="240" cy="290" r="1.2" fill="#FDE047" />
-        <circle cx="260" cy="330" r="4" fill="#BEE1E6" />
-        <circle cx="260" cy="330" r="1.5" fill="#FDE047" />
-        <circle cx="105" cy="340" r="4" fill="#FDE2E4" />
-        <circle cx="105" cy="340" r="1.5" fill="#FDE047" />
-        <circle cx="75" cy="380" r="4.5" fill="#BEE1E6" />
-        <circle cx="75" cy="380" r="1.5" fill="#FDE047" />
-
-        {/* Wooden Sign on Left "my garden" */}
-        <g transform="translate(10, 255)">
-          <rect x="18" y="16" width="4" height="24" fill="#8C653C" rx="1" />
-          <rect x="0" y="0" width="38" height="20" fill="#B88A58" stroke="#8C653C" strokeWidth="1" rx="3" />
-          <text x="5" y="12" fill="#4B331A" fontSize="6.5" fontFamily="monospace" fontWeight="bold">my garden</text>
-        </g>
       </svg>
 
-      {/* Fern Walking in the Path */}
-      <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-20">
+      {/* --- SCENIC DECOR ASSETS --- */}
+
+      {/* Large Scenic Trees in Background */}
+      <div className="absolute top-[85px] left-3 z-10 pointer-events-none opacity-90">
+        <img src="/assets/trimmed/Extra decor/Tree.png" alt="Tree" className="w-20 h-24 object-contain" />
+      </div>
+      <div className="absolute top-[75px] right-8 z-10 pointer-events-none opacity-85">
+        <img src="/assets/trimmed/Extra decor/Tree.png" alt="Tree" className="w-22 h-26 object-contain" />
+      </div>
+
+      {/* Bush & Tree Stump on Far Left */}
+      <div className="absolute top-[200px] left-2 z-15 pointer-events-none">
+        <img src="/assets/trimmed/Extra decor/Bush.png" alt="Bush" className="w-14 h-14 object-contain" />
+      </div>
+      <div className="absolute top-[225px] left-16 z-15 pointer-events-none">
+        <img src="/assets/trimmed/Extra decor/Tree stump.png" alt="Stump" className="w-12 h-10 object-contain" />
+      </div>
+
+      {/* Left Wooden Fence with Lantern */}
+      <div className="absolute top-[210px] left-[55px] z-15 pointer-events-none flex items-end">
+        <img src="/assets/trimmed/Extra decor/Fence.png" alt="Fence" className="w-16 h-12 object-contain" />
+        <img
+          src="/assets/trimmed/Extra decor/Light post.png"
+          alt="Lantern"
+          className="w-6 h-14 object-contain -ml-2 -mb-1"
+        />
+      </div>
+
+      {/* Right Wooden Fence & Cozy Bench */}
+      <div className="absolute top-[210px] right-[55px] z-15 pointer-events-none flex items-end">
+        <img src="/assets/trimmed/Extra decor/Fence.png" alt="Fence" className="w-16 h-12 object-contain" />
+        <img
+          src="/assets/trimmed/Extra decor/Bench.png"
+          alt="Bench"
+          className="w-14 h-10 object-contain -ml-1 -mb-1"
+        />
+      </div>
+
+      {/* Stepping Stones / Pebbles on Path */}
+      <div className="absolute top-[320px] left-[44%] -translate-x-1/2 z-15 pointer-events-none opacity-85">
+        <img src="/assets/trimmed/Extra decor/Pebbles.png" alt="Pebbles" className="w-14 h-9 object-contain" />
+      </div>
+
+      {/* Red Mushrooms near Path */}
+      <div className="absolute top-[265px] right-[105px] z-15 pointer-events-none">
+        <img
+          src="/assets/trimmed/Extra decor/Mushrooms.png"
+          alt="Mushrooms"
+          className="w-10 h-8 object-contain drop-shadow-sm"
+        />
+      </div>
+      <div className="absolute top-[340px] left-[70px] z-15 pointer-events-none">
+        <img
+          src="/assets/trimmed/Extra decor/Mushrooms.png"
+          alt="Mushrooms"
+          className="w-9 h-7 object-contain drop-shadow-sm"
+        />
+      </div>
+
+      {/* Watering Can on Grass */}
+      <div className="absolute top-[330px] right-[75px] z-15 pointer-events-none">
+        <img
+          src="/assets/trimmed/Extra decor/Watering can.png"
+          alt="Watering Can"
+          className="w-11 h-9 object-contain drop-shadow-sm"
+        />
+      </div>
+
+      {/* Dynamic Potted Plant Life (blooming / growing / seedling) */}
+      <div className="absolute top-[245px] right-[18px] z-20 pointer-events-none transition-all duration-500 transform hover:scale-105">
+        <img
+          src={getPlantAsset()}
+          alt="Garden Plant"
+          className="w-20 h-26 object-contain drop-shadow-lg animate-float-gentle"
+        />
+      </div>
+
+      {/* Water Pool / Drops in Bottom Right */}
+      <div className="absolute bottom-2 right-2 z-15 pointer-events-none">
+        <img
+          src="/assets/trimmed/Extra decor/water.png"
+          alt="Water"
+          className="w-28 h-12 object-contain opacity-90"
+        />
+      </div>
+
+      {/* Fluttering Butterflies & Bee */}
+      <div className="absolute top-[185px] left-[90px] z-25 pointer-events-none animate-flutter">
+        <img
+          src="/assets/trimmed/Extra decor/pink_butterfly.png"
+          alt="Butterfly"
+          className="w-9 h-9 object-contain drop-shadow-sm"
+        />
+      </div>
+      <div className="absolute top-[175px] right-[85px] z-25 pointer-events-none animate-flutter">
+        <img
+          src="/assets/trimmed/Extra decor/blue_butterfly.png"
+          alt="Butterfly"
+          className="w-9 h-9 object-contain drop-shadow-sm"
+        />
+      </div>
+      <div className="absolute top-[270px] left-[40px] z-25 pointer-events-none animate-float-gentle">
+        <img
+          src="/assets/trimmed/Extra decor/bee.png"
+          alt="Bee"
+          className="w-10 h-8 object-contain drop-shadow-sm"
+        />
+      </div>
+
+      {/* Floating Sakura Petals / Leaves in Breeze */}
+      <div className="absolute top-[140px] left-[35%] z-20 pointer-events-none animate-float-gentle opacity-75">
+        <img src="/assets/trimmed/Extra decor/petals.png" alt="Petals" className="w-6 h-12 object-contain" />
+      </div>
+      <div className="absolute top-[290px] right-[30%] z-20 pointer-events-none animate-float-gentle opacity-70">
+        <img src="/assets/trimmed/Extra decor/leaves.png" alt="Leaves" className="w-8 h-10 object-contain" />
+      </div>
+
+      {/* Walking Fairy Companion on the Path */}
+      <div
+        className="absolute top-[48%] z-25 transition-transform duration-1000 ease-in-out"
+        style={{
+          left: `calc(50% + ${walkX}px)`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
         <CompanionAvatar
           mood={currentMood}
           size="sm"
           showBubble={false}
+          isWalking={Math.abs(walkX) > 0}
+          walkingDirection={walkDir}
         />
       </div>
     </div>

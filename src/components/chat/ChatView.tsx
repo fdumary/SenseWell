@@ -117,14 +117,21 @@ export const ChatView: React.FC = () => {
       </div>
 
       {/* Card 2: DID YOU KNOW? */}
-      <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm">
-        <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#718096] mb-1">
-          Did you know?
+      <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm flex items-center justify-between">
+        <div>
+          <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#718096] mb-1">
+            Did you know?
+          </div>
+          <p className="text-xs font-bold text-[#2D3748] flex items-center gap-1.5">
+            <span>Fern waters the garden whenever you take a break.</span>
+            <span className="text-[#60A5FA]">💧</span>
+          </p>
         </div>
-        <p className="text-xs font-bold text-[#2D3748] flex items-center gap-1.5">
-          <span>Fern waters the garden whenever you take a break.</span>
-          <span className="text-[#60A5FA]">💧</span>
-        </p>
+        <img
+          src="/assets/trimmed/Extra decor/Watering can.png"
+          alt="Watering Can"
+          className="w-10 h-8 object-contain drop-shadow-sm ml-2 flex-shrink-0"
+        />
       </div>
 
       {/* Card 3: YOUR BOND (4-grid stat boxes) */}
@@ -197,8 +204,12 @@ export const ChatView: React.FC = () => {
                   className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isUser && (
-                    <div className="w-6 h-6 rounded-full bg-[#EEF4ED] border border-[#DCE8D8] flex items-center justify-center text-xs flex-shrink-0 mt-1">
-                      💙
+                    <div className="w-7 h-7 rounded-full bg-[#EEF4ED] border border-[#DCE8D8] flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5 shadow-sm">
+                      <img
+                        src="/assets/trimmed/lumi.png"
+                        alt="Lumi"
+                        className="w-full h-full object-contain p-0.5"
+                      />
                     </div>
                   )}
                   <div
