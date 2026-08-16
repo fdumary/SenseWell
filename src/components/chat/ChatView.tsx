@@ -92,34 +92,30 @@ export const ChatView: React.FC = () => {
 
   return (
     <div className="w-full max-w-md mx-auto space-y-3 animate-in fade-in duration-500 select-none pb-6">
-      {/* Top Hero Card in Buttercream (Screenshot 6) */}
-      <div className="p-6 rounded-3xl bg-[#F9E8B6] border border-[#ECD59B] text-center flex flex-col items-center shadow-sm">
-        {/* Companion Avatar */}
+      <div className="p-6 rounded-3xl bg-[#243322] border-2 border-[#3E563C] text-center flex flex-col items-center shadow-lg">
         <div className="mb-2">
           <CompanionAvatar mood={currentMood} size="lg" showBubble={false} />
         </div>
 
-        <h1 className="font-pixel text-xl font-bold text-[#2D3748] tracking-wide mb-0.5">
+        <h1 className="font-pixel text-xl font-bold text-[#EDE6D6] tracking-wide mb-0.5">
           Fern
         </h1>
-        <p className="text-xs text-[#6B5A38] font-semibold mb-3">
+        <p className="text-xs text-[#A8C79E] font-semibold mb-3">
           Your Forest Companion
         </p>
 
-        {/* Mood Badge */}
-        <div className="px-4 py-1 rounded-full bg-[#FFF5DA] border border-[#ECD59B] text-[#5C4A26] text-xs font-bold font-sans shadow-2xs">
+        <div className="px-4 py-1 rounded-full bg-[#1D2A1C] border border-[#3E563C] text-[#96C898] text-xs font-bold font-sans shadow-2xs">
           Happy &amp; content
         </div>
       </div>
 
-      {/* Card 2: DID YOU KNOW? in Buttercream */}
-      <div className="p-4 rounded-3xl bg-[#F9E8B6] border border-[#ECD59B] shadow-sm flex items-center justify-between">
+      <div className="p-4 rounded-3xl bg-[#3E2B18] border-2 border-[#5C4229] shadow-md flex items-center justify-between">
         <div>
-          <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#6B5A38] mb-1">
+          <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#AFA28C] mb-1">
             Did you know?
           </div>
-          <p className="text-xs font-bold text-[#2D3748] flex items-center gap-1.5">
-            <span>Fern&apos;s favorite season is autumn.</span>
+          <p className="text-xs font-bold text-[#EDE6D6] flex items-center gap-1.5">
+            <span>Fern's favorite season is autumn.</span>
             <span>🍂</span>
           </p>
         </div>
@@ -130,67 +126,60 @@ export const ChatView: React.FC = () => {
         />
       </div>
 
-      {/* Card 3: YOUR BOND in Buttercream with Ice Blue Sub-boxes */}
-      <div className="p-5 rounded-3xl bg-[#F9E8B6] border border-[#ECD59B] shadow-sm">
-        <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#6B5A38] mb-3">
+      <div className="p-5 rounded-3xl bg-[#3E2B18] border-2 border-[#5C4229] shadow-md">
+        <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#AFA28C] mb-3">
           Your Bond
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          {/* Streak Box in Ice Blue */}
-          <div className="p-3.5 rounded-2xl bg-[#D4E9F5] border border-[#B8DAED] flex flex-col items-center justify-center text-center shadow-2xs">
+          <div className="p-3.5 rounded-2xl bg-[#2A1C0E] border border-[#483420] flex flex-col items-center justify-center text-center shadow-2xs">
             <span className="text-xl mb-0.5">🔥</span>
-            <span className="font-pixel text-sm font-bold text-[#1F3847]">
+            <span className="font-pixel text-sm font-bold text-[#EDE6D6]">
               {bondStats.streakDays}d
             </span>
-            <span className="text-[10px] text-[#486B80] font-bold">Streak</span>
+            <span className="text-[10px] text-[#AFA28C] font-bold">Streak</span>
           </div>
 
-          {/* Sessions Box in Ice Blue */}
-          <div className="p-3.5 rounded-2xl bg-[#D4E9F5] border border-[#B8DAED] flex flex-col items-center justify-center text-center shadow-2xs">
+          <div className="p-3.5 rounded-2xl bg-[#2A1C0E] border border-[#483420] flex flex-col items-center justify-center text-center shadow-2xs">
             <span className="text-xl mb-0.5">🌸</span>
-            <span className="font-pixel text-sm font-bold text-[#1F3847]">
+            <span className="font-pixel text-sm font-bold text-[#EDE6D6]">
               {bondStats.sessionsCompleted}
             </span>
-            <span className="text-[10px] text-[#486B80] font-bold">Sessions</span>
+            <span className="text-[10px] text-[#AFA28C] font-bold">Sessions</span>
           </div>
 
-          {/* Water Drops Box in Ice Blue */}
-          <div className="p-3.5 rounded-2xl bg-[#D4E9F5] border border-[#B8DAED] flex flex-col items-center justify-center text-center shadow-2xs">
+          <div className="p-3.5 rounded-2xl bg-[#2A1C0E] border border-[#483420] flex flex-col items-center justify-center text-center shadow-2xs">
             <span className="text-xl mb-0.5">💧</span>
-            <span className="font-pixel text-sm font-bold text-[#1F3847]">
+            <span className="font-pixel text-sm font-bold text-[#EDE6D6]">
               {bondStats.waterDrops}
             </span>
-            <span className="text-[10px] text-[#486B80] font-bold">Water Drops</span>
+            <span className="text-[10px] text-[#AFA28C] font-bold">Water Drops</span>
           </div>
 
-          {/* Stage Box in Ice Blue */}
-          <div className="p-3.5 rounded-2xl bg-[#D4E9F5] border border-[#B8DAED] flex flex-col items-center justify-center text-center shadow-2xs">
+          <div className="p-3.5 rounded-2xl bg-[#2A1C0E] border border-[#483420] flex flex-col items-center justify-center text-center shadow-2xs">
             <span className="text-xl mb-0.5">🌿</span>
-            <span className="font-pixel text-sm font-bold text-[#1F3847]">
+            <span className="font-pixel text-sm font-bold text-[#EDE6D6]">
               Stage {bondStats.gardenStage}
             </span>
-            <span className="text-[10px] text-[#486B80] font-bold">Garden</span>
+            <span className="text-[10px] text-[#AFA28C] font-bold">Garden</span>
           </div>
         </div>
       </div>
 
-      {/* Bottom Affirmation Card in Buttercream */}
-      <div className="p-4 rounded-3xl bg-[#F9E8B6] border border-[#ECD59B] shadow-sm flex items-center justify-between">
-        <p className="text-xs font-bold text-[#2D3748]">
-          We&apos;ve done {bondStats.sessionsCompleted} session together! I&apos;m so proud of you! 🌸
+      <div className="p-4 rounded-3xl bg-[#3E2B18] border-2 border-[#5C4229] shadow-md flex items-center justify-between">
+        <p className="text-xs font-bold text-[#EDE6D6]">
+          We've done {bondStats.sessionsCompleted} session together! I'm so proud of you! 🌸
         </p>
         <button
           onClick={() => setShowChatBox(prev => !prev)}
-          className="ml-2 px-3 py-1.5 rounded-full bg-[#5C4A26] hover:bg-[#4A3B1E] text-white text-[11px] font-bold transition-all cursor-pointer flex-shrink-0"
+          className="ml-2 px-3 py-1.5 rounded-full bg-[#486940] hover:bg-[#3D5C35] text-white text-[11px] font-bold transition-all cursor-pointer flex-shrink-0"
         >
           {showChatBox ? 'Hide Chat' : 'Talk with Lumi'}
         </button>
       </div>
 
-      {/* Interactive Chat Stream in Buttercream card */}
       {showChatBox && (
-        <div className="p-4 rounded-3xl bg-[#F9E8B6] border border-[#ECD59B] shadow-sm space-y-3 animate-in fade-in duration-200">
+        <div className="p-4 rounded-3xl bg-[#3E2B18] border-2 border-[#5C4229] shadow-md space-y-3 animate-in fade-in duration-200">
           <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
             {messages.map(msg => {
               const isUser = msg.sender === 'user';
@@ -200,7 +189,7 @@ export const ChatView: React.FC = () => {
                   className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isUser && (
-                    <div className="w-7 h-7 rounded-full bg-[#D4E9F5] border border-[#B8DAED] flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5 shadow-xs">
+                    <div className="w-7 h-7 rounded-full bg-[#2A1C0E] border border-[#5C4229] flex items-center justify-center overflow-hidden flex-shrink-0 mt-0.5 shadow-xs">
                       <img
                         src="/assets/trimmed/lumi.png"
                         alt="Lumi"
@@ -211,8 +200,8 @@ export const ChatView: React.FC = () => {
                   <div
                     className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[80%] ${
                       isUser
-                        ? 'bg-[#5C4A26] text-white font-semibold rounded-tr-none'
-                        : 'bg-[#FFF5DA] border border-[#ECD59B] text-[#2D3748] rounded-tl-none font-medium'
+                        ? 'bg-[#486940] text-white font-semibold rounded-tr-none'
+                        : 'bg-[#2A1C0E] border border-[#5C4229] text-[#EDE6D6] rounded-tl-none font-medium'
                     }`}
                   >
                     {msg.text}
@@ -222,27 +211,26 @@ export const ChatView: React.FC = () => {
             })}
 
             {isTyping && (
-              <div className="flex gap-2 justify-start items-center text-xs text-[#6B5A38] font-medium p-2">
+              <div className="flex gap-2 justify-start items-center text-xs text-[#AFA28C] font-medium p-2">
                 <span>Lumi is reflecting...</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5C4A26] animate-bounce" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#98C992] animate-bounce" />
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Requested Chat Input Area */}
-          <div className="chat-input-area flex items-center gap-2 pt-2 border-t border-[#ECD59B]">
+          <div className="chat-input-area flex items-center gap-2 pt-2 border-t border-[#5C4229]">
             <input
               type="text"
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               onKeyPress={e => e.key === 'Enter' && handleSend()}
               placeholder="Say something to Lumi..."
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FFF5DA] border border-[#ECD59B] text-xs text-[#2D3748] focus:outline-none focus:border-[#5C4A26]"
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#2A1C0E] border border-[#5C4229] text-xs text-[#EDE6D6] placeholder-[#8C7A64] focus:outline-none focus:border-[#98C992]"
             />
             <button
               onClick={handleSend}
-              className="px-4 py-2.5 rounded-xl bg-[#5C4A26] text-white text-xs font-bold hover:bg-[#4A3B1E] transition-all cursor-pointer shadow-xs"
+              className="px-4 py-2.5 rounded-xl bg-[#486940] text-white text-xs font-bold hover:bg-[#3D5C35] transition-all cursor-pointer shadow-xs"
             >
               Send
             </button>
