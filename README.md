@@ -20,7 +20,7 @@ Lumi helps students and remote workers build sustainable focus habits. Lumi prov
 | Frontend | React, TypeScript, Vite, Tailwind CSS |
 | Backend | Python, Flask, Flask-CORS |
 | AI | Google Gemini 2.5 Flash / local contextual fallback |
-| Visuals | Custom Lumi, Fern, cottage garden, and plant assets |
+| Visuals | Figma, & procreate to great custom companion, and assets. |
 
 ## Project layout
 
