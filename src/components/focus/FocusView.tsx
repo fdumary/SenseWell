@@ -55,44 +55,44 @@ export const FocusView: React.FC = () => {
   ];
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-4 animate-in fade-in duration-500 select-none pb-6">
-      {/* Screen 3 Header: My Mood Garden */}
-      <div className="text-center pt-1 pb-2">
-        <h1 className="font-pixel text-base sm:text-lg font-bold text-[#2D3748] tracking-wide flex items-center justify-center gap-2">
+    <div className="w-full max-w-md mx-auto space-y-3 animate-in fade-in duration-500 select-none pb-6">
+      {/* Screen 1 Header: Soft Mint Green Header Bar */}
+      <div className="p-3 rounded-2xl bg-[#D5E8D2] border border-[#BCDAB8] text-center shadow-sm">
+        <h1 className="font-pixel text-sm sm:text-base font-bold text-[#243E29] tracking-wide flex items-center justify-center gap-2">
           <span>✿</span>
           <span>My Mood Garden</span>
           <span>✿</span>
         </h1>
 
         {/* Status Sub-badge: Sprouting | 3 drops */}
-        <div className="mt-1.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF7F0] border border-[#E8E3D7] text-xs font-bold text-[#4A7C59]">
+        <div className="mt-1.5 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFF8E7] border border-[#EFE2C5] text-xs font-bold text-[#2E5936] shadow-2xs">
           <span>🌿 Sprouting</span>
-          <span className="text-[#CBD5E1]">|</span>
-          <span className="text-[#60A5FA]">💧 {dewDrops || bondStats.waterDrops} drops</span>
+          <span className="text-[#D8C9AA]">|</span>
+          <span className="text-[#3B82F6]">💧 {dewDrops || bondStats.waterDrops} drops</span>
         </div>
       </div>
 
       {/* Main Mood Garden Scenic Canvas */}
       <MoodGardenCanvas />
 
-      {/* "HOW ARE YOU FEELING TODAY?" Section */}
-      <div className="pt-2 text-center">
-        <h3 className="font-pixel text-[11px] font-bold text-[#718096] uppercase tracking-wider mb-3">
+      {/* "HOW ARE YOU FEELING TODAY?" Section: Soft Lilac Bar */}
+      <div className="p-3 rounded-2xl bg-[#DDD7ED] border border-[#CBC3E3] text-center shadow-sm">
+        <h3 className="font-pixel text-[10px] font-bold text-[#4B3C64] uppercase tracking-wider mb-2.5">
           How are you feeling today?
         </h3>
 
         {/* 5 Circular Mood Buttons (Happy, Hyped, Calm, Tired, Meh) */}
-        <div className="flex items-center justify-center gap-2.5 sm:gap-3">
+        <div className="flex items-center justify-center gap-2 sm:gap-2.5">
           {moodsList.map(item => {
             const isSelected = currentMood === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => setMood(item.id)}
-                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-xl sm:text-2xl transition-all transform hover:scale-110 active:scale-95 cursor-pointer border ${item.iconBg} ${
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl transition-all transform hover:scale-110 active:scale-95 cursor-pointer border ${item.iconBg} ${
                   isSelected
                     ? `${item.activeBorder} scale-105 shadow-md`
-                    : 'border-[#EAE6DC] opacity-85 hover:opacity-100 shadow-sm'
+                    : 'border-white/80 opacity-90 hover:opacity-100 shadow-2xs'
                 }`}
                 title={`Feel ${item.label}`}
               >
@@ -103,13 +103,13 @@ export const FocusView: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary CTA: Start Focus Session Button */}
-      <div className="pt-2">
+      {/* Primary CTA: Start Focus Session Button in Soft Pastel Lilac */}
+      <div className="pt-0.5">
         <button
           onClick={startFocusSession}
-          className="w-full py-4 px-6 rounded-2xl bg-[#4A7C59] hover:bg-[#3D684A] text-white font-bold text-base shadow-figma-button flex items-center justify-center gap-2.5 transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+          className="w-full py-3.5 px-6 rounded-2xl bg-[#E8D7F2] hover:bg-[#DFC8EC] text-[#352945] border border-[#D4BFE2] font-pixel text-xs tracking-wider shadow-sm flex items-center justify-center gap-2 transition-all transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
         >
-          <Play className="w-5 h-5 fill-white" />
+          <Play className="w-4 h-4 fill-[#352945] text-[#352945]" />
           <span>Start Focus Session</span>
         </button>
       </div>

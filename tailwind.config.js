@@ -7,36 +7,47 @@ export default {
   theme: {
     extend: {
       colors: {
-        figma: {
-          bg: '#FBF8F1',
-          bgDarker: '#F3EFE6',
-          card: '#FFFDF9',
-          cardMuted: '#F6F3EB',
-          cardGreen: '#EAF3EB',
-          cardGreenHeader: '#DEEBDD',
-          border: '#EAE6DC',
-          borderMuted: '#E2DDD0',
-          forest: '#4A7C59',
-          forestHover: '#3D684A',
-          forestDark: '#2C4A35',
-          sage: '#C2D8B9',
-          sageLight: '#EEF4ED',
-          lavender: '#A89FDC',
-          lavenderHover: '#958ACF',
-          lavenderLight: '#F3F0FF',
-          blossom: '#F472B6',
-          blossomLight: '#FDF2F8',
-          blossomBorder: '#FBCFE8',
-          terracotta: '#E07A5F',
-          terracottaLight: '#FBEBE6',
-          sun: '#F59E0B',
-          sunLight: '#FEF3C7',
-          sky: '#60A5FA',
-          skyLight: '#EFF6FF',
-          textMain: '#2D3748',
-          textMuted: '#718096',
-          textSubtle: '#A0AEC0',
-          pixelGreen: '#234E32',
+        theme: {
+          // Garden / Focus View Greens & Lilacs
+          gardenBg: '#446637',
+          gardenHeader: '#D5E8D2',
+          gardenHeaderBorder: '#BCDAB8',
+          moodBarBg: '#DDD7ED',
+          moodBarBorder: '#CBC3E3',
+          startBtnBg: '#E8D7F2',
+          startBtnHover: '#DFC8EC',
+          startBtnText: '#352945',
+
+          // Focus Session Modal Ice Blue & Lavender
+          focusSkyTop: '#BEDBBA',
+          focusSkyBottom: '#476839',
+          focusCardBg: '#DDF0F7',
+          focusCardBorder: '#B8D6E6',
+          focusTimerText: '#223D29',
+          focusPauseBg: '#DEC7EB',
+          focusPauseHover: '#CFB5DF',
+          focusPauseText: '#3D2852',
+          focusSpeechBubble: '#E5DAF2',
+
+          // Stats View Blush Pink & Mint Cards
+          statsBg: '#F8D7DF',
+          statsCardBg: '#D2EBD2',
+          statsCardBorder: '#B5DCB5',
+          statsProgressFill: '#4D7C54',
+          statsProgressTrack: '#E4F5E4',
+
+          // Companion View Lilac & Buttercream Cards
+          companionBg: '#D6C8E6',
+          companionCardBg: '#F9E8B6',
+          companionCardBorder: '#ECD59B',
+          companionStatBoxBg: '#D4E9F5',
+          companionStatBoxBorder: '#B8DAED',
+
+          // Break Modal Mint
+          breakModalBg: '#D8EBD6',
+          breakModalBorder: '#B8DCB6',
+          breakBtnPrimary: '#EAF5E8',
+          breakBtnSecondary: '#FAF6EE',
         }
       },
       fontFamily: {

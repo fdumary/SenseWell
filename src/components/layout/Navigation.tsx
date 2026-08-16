@@ -15,18 +15,18 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, setActiveTab 
   ];
 
   return (
-    <nav className="w-full max-w-md mx-auto pt-4 pb-2 px-2 flex items-center justify-center select-none">
-      <div className="flex items-center gap-2 p-1 rounded-full bg-[#FAF7F0] border border-[#E8E3D7] shadow-sm">
+    <nav className="w-full max-w-md mx-auto pt-2 pb-2 px-2 flex items-center justify-center select-none">
+      <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/75 backdrop-blur-md border border-white/50 shadow-sm">
         {tabs.map(tab => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold font-sans transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold font-sans transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-[#EEF4ED] text-[#2D3748] border border-[#DCE8D8] shadow-sm scale-105'
-                  : 'text-[#718096] hover:text-[#2D3748] hover:bg-[#F5F1E8]'
+                  ? 'bg-white text-[#2D3748] border border-white/80 shadow-sm scale-105'
+                  : 'text-[#4A5568] hover:text-[#1A202C] hover:bg-white/40'
               }`}
             >
               <span className="text-sm">{tab.emoji}</span>
