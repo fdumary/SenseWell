@@ -3,32 +3,32 @@ import { useKinetic } from '../../context/KineticContext';
 import { useGarden } from '../../context/GardenContext';
 import { ChatMessage } from '../../types';
 import { CompanionAvatar } from '../garden/CompanionAvatar';
-import { Send } from 'lucide-react';
+import { sendToLumi } from '../../api';
 
 export const ChatView: React.FC = () => {
-  const { bondStats, currentMood } = useKinetic();
-  const { fertilizeGarden } = useGarden();
+  const {
+    bondStats,
+    currentMood,
+    timerData,
+    setIsBreakReminderOpen,
+    setIsBreathingModalOpen,
+    addWaterDrop,
+  } = useKinetic();
 
-  const [inputVal, setInputVal] = useState('');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [showChatBox, setShowChatBox] = useState<boolean>(false);
+  const { fertilizeGarden } = useGarden();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
-      sender: 'companion',
-      text: "Hello! I am Fern, your forest companion. I'm keeping the garden blooming while you work.",
+      sender: 'lumi',
+      text: "Hey there! I'm Lumi, your wellness companion. 💙",
       timestamp: 'Just now',
-      tag: 'casual',
-    },
-    {
-      id: '2',
-      sender: 'companion',
-      text: "Whenever you feel ready to pause, take a quick breath and I'll water the flowers for you! 💧",
-      timestamp: 'Just now',
-      tag: 'kinetic-insight',
     },
   ]);
+
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [showChatBox, setShowChatBox] = useState<boolean>(true);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -38,59 +38,76 @@ export const ChatView: React.FC = () => {
     }
   }, [messages, isTyping, showChatBox]);
 
-  const handleSend = (textToSend?: string) => {
-    const text = textToSend || inputVal;
-    if (!text.trim() || isTyping) return;
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
 
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    const userText = inputText;
+    // Show user message immediately
+    setMessages(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: 'user',
+        text: userText,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
 
-    setMessages(prev => [...prev, userMsg]);
-    if (!textToSend) setInputVal('');
+    setInputText('');
     setIsTyping(true);
 
-    setTimeout(() => {
-      let reply = '';
-      const lower = text.toLowerCase();
-      if (lower.includes('stress') || lower.includes('tired') || lower.includes('break')) {
-        reply = "Take a gentle pause with me! Even a 2-minute stretch will give your mind fresh energy. 🌿";
-      } else if (lower.includes('win') || lower.includes('done') || lower.includes('finish')) {
-        reply = "Yay! I am so proud of you! I just bloomed another flower on our trellis! 🌸";
-        fertilizeGarden();
-      } else {
-        reply = "I'm right here with you in the garden. Keep flowing at your own cozy pace! 🍃";
-      }
-
-      const companionMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        sender: 'companion',
-        text: reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-
-      setMessages(prev => [...prev, companionMsg]);
+    try {
+      const lumi = await sendToLumi(userText, timerData);
       setIsTyping(false);
-    }, 900);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'lumi',
+          text: lumi.reply || "I'm right here with you! 🌿",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+
+      // Handle suggested actions
+      if (lumi.suggestedAction === 'take_break') {
+        setIsBreakReminderOpen(true);
+      } else if (lumi.suggestedAction === 'breathing_exercise') {
+        setIsBreathingModalOpen(true);
+      } else if (lumi.suggestedAction === 'drink_water') {
+        addWaterDrop();
+        fertilizeGarden();
+      } else if (lumi.suggestedAction === 'check_posture') {
+        // Posture checked
+      }
+    } catch (e) {
+      setIsTyping(false);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'lumi',
+          text: "I'm having trouble connecting, but I'm here! 💙",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    }
   };
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4 animate-in fade-in duration-500 select-none pb-6">
       {/* Top Hero Card matching Screenshot 2 */}
       <div className="p-6 rounded-3xl figma-panel-green text-center flex flex-col items-center shadow-sm">
-        {/* Fern Avatar */}
+        {/* Fern / Lumi Avatar */}
         <div className="mb-2">
           <CompanionAvatar mood={currentMood} size="lg" showBubble={false} />
         </div>
 
         <h1 className="font-pixel text-xl font-bold text-[#2D3748] tracking-wide mb-0.5">
-          Fern
+          Fern &amp; Lumi
         </h1>
         <p className="text-xs text-[#718096] font-semibold mb-3">
-          Your Forest Companion
+          Your Forest &amp; AI Wellness Companion
         </p>
 
         {/* Mood Badge */}
@@ -164,11 +181,11 @@ export const ChatView: React.FC = () => {
           onClick={() => setShowChatBox(prev => !prev)}
           className="ml-2 px-3 py-1.5 rounded-full bg-[#4A7C59] hover:bg-[#3D684A] text-white text-[11px] font-bold transition-all cursor-pointer flex-shrink-0"
         >
-          {showChatBox ? 'Hide Chat' : 'Talk with Fern'}
+          {showChatBox ? 'Hide Chat' : 'Talk with Lumi'}
         </button>
       </div>
 
-      {/* Interactive Chat Stream when toggled */}
+      {/* Interactive Chat Stream */}
       {showChatBox && (
         <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm space-y-3 animate-in fade-in duration-200">
           <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
@@ -181,7 +198,7 @@ export const ChatView: React.FC = () => {
                 >
                   {!isUser && (
                     <div className="w-6 h-6 rounded-full bg-[#EEF4ED] border border-[#DCE8D8] flex items-center justify-center text-xs flex-shrink-0 mt-1">
-                      🌿
+                      💙
                     </div>
                   )}
                   <div
@@ -199,29 +216,28 @@ export const ChatView: React.FC = () => {
 
             {isTyping && (
               <div className="flex gap-2 justify-start items-center text-xs text-[#718096] font-medium p-2">
-                <span>Fern is reflecting...</span>
+                <span>Lumi is reflecting...</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-[#4A7C59] animate-bounce" />
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat Input */}
-          <div className="pt-2 flex items-center gap-2 border-t border-[#EAE6DC]">
+          {/* Requested Chat Input Area */}
+          <div className="chat-input-area flex items-center gap-2 pt-2 border-t border-[#EAE6DC]">
             <input
               type="text"
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder="Chat with Fern..."
-              className="flex-1 px-3 py-2 rounded-xl bg-[#FAF7F0] border border-[#E8E3D7] text-xs text-[#2D3748] focus:outline-none focus:border-[#4A7C59]"
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyPress={e => e.key === 'Enter' && handleSend()}
+              placeholder="Say something to Lumi..."
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FAF7F0] border border-[#E8E3D7] text-xs text-[#2D3748] focus:outline-none focus:border-[#4A7C59]"
             />
             <button
-              onClick={() => handleSend()}
-              disabled={!inputVal.trim()}
-              className="p-2 rounded-xl bg-[#4A7C59] text-white disabled:opacity-50 cursor-pointer"
+              onClick={handleSend}
+              className="px-4 py-2.5 rounded-xl bg-[#4A7C59] text-white text-xs font-bold hover:bg-[#3D684A] transition-all cursor-pointer shadow-sm"
             >
-              <Send className="w-3.5 h-3.5" />
+              Send
             </button>
           </div>
         </div>

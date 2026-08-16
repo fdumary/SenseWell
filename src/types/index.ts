@@ -34,7 +34,7 @@ export interface CompanionEmotion {
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'companion';
+  sender: 'user' | 'companion' | 'lumi';
   text: string;
   timestamp: string;
   tag?: 'kinetic-insight' | 'micro-win' | 'grounding' | 'casual';

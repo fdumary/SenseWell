@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { KineticMetrics, MoodState, UserPresenceStatus, BondStats } from '../types';
+import { getTimerStatus, doCheckIn, TimerBackendData } from '../api';
 
 interface KineticContextType {
   metrics: KineticMetrics;
@@ -30,6 +31,8 @@ interface KineticContextType {
   // Bond & Progression Stats
   bondStats: BondStats;
   addWaterDrop: () => void;
+  // Backend Timer Data
+  timerData: TimerBackendData | null;
 }
 
 const defaultMetrics: KineticMetrics = {
@@ -71,6 +74,71 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     dailyGoalHours: 4,
     breaksToday: 1,
   });
+
+  const [timerData, setTimerData] = useState<TimerBackendData | null>(null);
+
+  // ===== 1. FETCH TIMER EVERY 5 SECONDS =====
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const data = await getTimerStatus();
+        setTimerData(data);
+        if (data?.todayFocusMs) {
+          const mins = Math.floor(data.todayFocusMs / 60000);
+          setBondStats(b => ({ ...b, focusMinutesToday: mins || b.focusMinutesToday }));
+        }
+        if (data?.breakDue) {
+          setIsBreakReminderOpen(true);
+        }
+      } catch (e) {
+        // Timer offline fallback - silent
+      }
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ===== 2. ACTIVITY PING (Amber's requirement) =====
+  useEffect(() => {
+    let lastActive = Date.now();
+
+    const updateActive = () => {
+      lastActive = Date.now();
+    };
+
+    ['mousemove', 'keydown', 'click'].forEach(event =>
+      window.addEventListener(event, updateActive)
+    );
+
+    const pingInterval = setInterval(() => {
+      if (Date.now() - lastActive < 30000 && document.visibilityState === 'visible') {
+        fetch('http://localhost:5000/activity', { method: 'POST' }).catch(() => {});
+      }
+    }, 30000);
+
+    return () => {
+      ['mousemove', 'keydown', 'click'].forEach(event =>
+        window.removeEventListener(event, updateActive)
+      );
+      clearInterval(pingInterval);
+    };
+  }, []);
+
+  // ===== 3. 30-MIN CHECK-IN =====
+  useEffect(() => {
+    const checkInInterval = setInterval(async () => {
+      if (!timerData) return;
+      try {
+        await doCheckIn(timerData);
+      } catch (e) {
+        // Check-in failed - silent
+      }
+    }, 30 * 60 * 1000);
+
+    return () => clearInterval(checkInInterval);
+  }, [timerData]);
 
   // Mouse trajectory tracking refs
   const lastPos = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -259,6 +327,7 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         endFocusSession,
         bondStats,
         addWaterDrop,
+        timerData,
       }}
     >
       {children}
