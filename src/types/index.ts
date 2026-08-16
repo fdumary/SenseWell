@@ -1,5 +1,7 @@
 export type MoodState = 'deep-flow' | 'serene' | 'wandering' | 'stressed' | 'fatigued';
 
+export type UserPresenceStatus = 'working' | 'break' | 'away';
+
 export interface KineticMetrics {
   velocity: number; // px / ms
   acceleration: number;

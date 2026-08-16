@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoodGardenCanvas } from '../garden/MoodGardenCanvas';
+import { FocusTimer } from './FocusTimer';
 import { useKinetic } from '../../context/KineticContext';
 import { useGarden } from '../../context/GardenContext';
 import { Zap, Compass, Wind, AlertCircle, ShieldCheck, Heart, Sparkles } from 'lucide-react';
@@ -30,6 +31,9 @@ export const FocusView: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Big Centered Focus Timer Component */}
+      <FocusTimer />
+
       {/* Simulation & Passive Mode Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl glass-panel border border-emerald-500/20">
         <div className="flex items-center gap-2">

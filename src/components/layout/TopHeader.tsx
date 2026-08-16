@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavTab } from './Navigation';
 import { useKinetic } from '../../context/KineticContext';
+import { StatusBadge } from '../common/StatusBadge';
 import { Wind } from 'lucide-react';
 
 interface TopHeaderProps {
@@ -47,7 +48,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ activeTab }) => {
       </div>
 
       {/* Top Quick Status Pill & Action */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Live Presence Status Badge (🟢 Working / 🟡 On Break / ⚪ Away) */}
+        <StatusBadge />
+
         {/* Kinetic Rhythm Live Pill */}
         <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl glass-pill text-xs text-slate-200">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />

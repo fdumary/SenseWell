@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { KineticMetrics, MoodState } from '../types';
+import { KineticMetrics, MoodState, UserPresenceStatus } from '../types';
 
 interface KineticContextType {
   metrics: KineticMetrics;
   recentVelocities: number[];
   recentJitters: number[];
+  presenceStatus: UserPresenceStatus;
+  setPresenceStatus: (status: UserPresenceStatus) => void;
   simulateMood: (mood: MoodState | 'live') => void;
   resetTelemetry: () => void;
   isSimulating: boolean;
@@ -30,6 +32,7 @@ const KineticContext = createContext<KineticContextType | undefined>(undefined);
 
 export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [metrics, setMetrics] = useState<KineticMetrics>(defaultMetrics);
+  const [presenceStatus, setPresenceStatus] = useState<UserPresenceStatus>('working');
   const [recentVelocities, setRecentVelocities] = useState<number[]>([0.2, 0.4, 0.5, 0.3, 0.45, 0.6, 0.4]);
   const [recentJitters, setRecentJitters] = useState<number[]>([10, 15, 12, 8, 14, 11, 13]);
   const [activeSimulationState, setActiveSimulationState] = useState<MoodState | null>(null);
@@ -226,6 +229,8 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         metrics,
         recentVelocities,
         recentJitters,
+        presenceStatus,
+        setPresenceStatus,
         simulateMood,
         resetTelemetry,
         isSimulating: activeSimulationState !== null,
