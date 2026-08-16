@@ -1,12 +1,12 @@
-export type MoodState = 'deep-flow' | 'serene' | 'wandering' | 'stressed' | 'fatigued';
+export type MoodState = 'happy' | 'hyped' | 'calm' | 'tired' | 'meh';
 
 export type UserPresenceStatus = 'working' | 'break' | 'away';
 
 export interface KineticMetrics {
   velocity: number; // px / ms
   acceleration: number;
-  jitterIndex: number; // 0 (smooth glides) to 100 (frantic jitter/erratic micro-corrections)
-  pauseFrequency: number; // seconds between active motion
+  jitterIndex: number; // 0 to 100
+  pauseFrequency: number;
   smoothnessScore: number; // 0 to 100
   tensionScore: number; // 0 to 100
   inferredMood: MoodState;
@@ -20,16 +20,16 @@ export interface GardenFlora {
   x: number;
   y: number;
   size: number;
-  bloomProgress: number; // 0 (wilted/closed) to 1 (full vibrant bloom)
+  bloomProgress: number; // 0 to 1
   hue: number;
   petals: number;
 }
 
 export interface CompanionEmotion {
   state: MoodState;
-  expression: 'happy' | 'gentle' | 'curious' | 'concerned' | 'cozy' | 'sleeping';
+  expression: 'happy' | 'hyped' | 'calm' | 'tired' | 'meh';
   quote: string;
-  actionPrompt?: string;
+  statusText: string;
 }
 
 export interface ChatMessage {
@@ -44,11 +44,21 @@ export interface ChatMessage {
   };
 }
 
+export interface BondStats {
+  streakDays: number;
+  sessionsCompleted: number;
+  waterDrops: number;
+  gardenStage: number;
+  focusMinutesToday: number;
+  dailyGoalHours: number;
+  breaksToday: number;
+}
+
 export interface DailyStatPoint {
-  time: string; // e.g. "09:00", "11:00"
-  flow: number; // 0 - 100
-  jitter: number; // 0 - 100
-  bloom: number; // 0 - 100
+  time: string;
+  flow: number;
+  jitter: number;
+  bloom: number;
   interventions: number;
 }
 

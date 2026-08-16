@@ -43,7 +43,7 @@ export const BreathingModal: React.FC = () => {
 
   const handleFinishBreak = () => {
     fertilizeGarden();
-    simulateMood('serene');
+    simulateMood('calm');
     setIsBreathingModalOpen(false);
   };
 

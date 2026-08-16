@@ -3,43 +3,40 @@ import { useKinetic } from '../../context/KineticContext';
 import { useGarden } from '../../context/GardenContext';
 import { ChatMessage } from '../../types';
 import { CompanionAvatar } from '../garden/CompanionAvatar';
-import { Send, Sparkles, Heart } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 export const ChatView: React.FC = () => {
-  const { metrics, triggerMicroBreak } = useKinetic();
+  const { bondStats, currentMood } = useKinetic();
   const { fertilizeGarden } = useGarden();
 
   const [inputVal, setInputVal] = useState('');
-  const [personality, setPersonality] = useState<'nurturing' | 'playful' | 'zen' | 'silent'>('nurturing');
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [showChatBox, setShowChatBox] = useState<boolean>(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       sender: 'companion',
-      text: "Hello friend. I've been quietly enjoying the garden breeze. How is your energy feeling right now?",
+      text: "Hello! I am Fern, your forest companion. I'm keeping the garden blooming while you work.",
       timestamp: 'Just now',
       tag: 'casual',
     },
     {
       id: '2',
       sender: 'companion',
-      text: metrics.tensionScore > 50
-        ? "I noticed some rapid, sharp mouse movements a minute ago. No pressure to talk about it, but I'm here if you want to vent or pause."
-        : "Your cursor kinetics have been so smooth and harmonious. The lotus flowers are blooming beautifully.",
+      text: "Whenever you feel ready to pause, take a quick breath and I'll water the flowers for you! 💧",
       timestamp: 'Just now',
       tag: 'kinetic-insight',
-      suggestedAction: metrics.tensionScore > 50
-        ? { label: 'Take a 60-second Breath', actionType: 'breathe' }
-        : { label: 'Celebrate Flow State', actionType: 'micro-win' },
     },
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+    if (showChatBox) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isTyping, showChatBox]);
 
   const handleSend = (textToSend?: string) => {
     const text = textToSend || inputVal;
@@ -56,33 +53,16 @@ export const ChatView: React.FC = () => {
     if (!textToSend) setInputVal('');
     setIsTyping(true);
 
-    // Generate contextually empathetic companion reply
     setTimeout(() => {
       let reply = '';
-      let tag: ChatMessage['tag'] = 'casual';
-      let action: ChatMessage['suggestedAction'] = undefined;
-
       const lower = text.toLowerCase();
-      if (lower.includes('stress') || lower.includes('overwhelm') || lower.includes('deadline') || lower.includes('hard')) {
-        reply = personality === 'playful'
-          ? "Deep breath, champion! Deadlines are tough, but you are tougher. Let's shake out those fingers and take a 30-second reset."
-          : "That heavy feeling is valid. You don't have to carry the whole mountain at once—just the next tiny step. I'm right here with you.";
-        tag = 'grounding';
-        action = { label: '4-7-8 Breathing', actionType: 'breathe' };
-      } else if (lower.includes('win') || lower.includes('done') || lower.includes('finished') || lower.includes('celebrate')) {
-        reply = "YES! That is worth celebrating! I just bloomed another flower in your garden for that!";
-        tag = 'micro-win';
-        action = { label: 'See Bloom Progress', actionType: 'micro-win' };
+      if (lower.includes('stress') || lower.includes('tired') || lower.includes('break')) {
+        reply = "Take a gentle pause with me! Even a 2-minute stretch will give your mind fresh energy. 🌿";
+      } else if (lower.includes('win') || lower.includes('done') || lower.includes('finish')) {
+        reply = "Yay! I am so proud of you! I just bloomed another flower on our trellis! 🌸";
         fertilizeGarden();
-      } else if (lower.includes('tired') || lower.includes('exhausted') || lower.includes('sleepy')) {
-        reply = "Your kinetic velocity has been very gentle. Maybe your eyes need a rest from the blue light? Close them for 30 seconds and listen to the ambient breeze.";
-        tag = 'grounding';
-        action = { label: 'Gentle Eye Rest', actionType: 'stretch' };
       } else {
-        reply = personality === 'zen'
-          ? "Every breath and keystroke is part of the flow. Be gentle with your pace today."
-          : "I hear you. Remember that you don't have to fill out any daily mood forms here—I sense and support you effortlessly through your flow.";
-        tag = 'casual';
+        reply = "I'm right here with you in the garden. Keep flowing at your own cozy pace! 🍃";
       }
 
       const companionMsg: ChatMessage = {
@@ -90,199 +70,162 @@ export const ChatView: React.FC = () => {
         sender: 'companion',
         text: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        tag,
-        suggestedAction: action,
       };
 
       setMessages(prev => [...prev, companionMsg]);
       setIsTyping(false);
-    }, 1200);
+    }, 900);
   };
 
-  const quickPrompts = [
-    { label: '🌿 Feeling overwhelmed by tasks', prompt: 'I am feeling overwhelmed with what I need to do right now.' },
-    { label: '✨ Celebrate a small win', prompt: 'I just finished a tricky task and want to celebrate a small win!' },
-    { label: '🧘 Help me ground myself', prompt: 'My thoughts are racing. Can you help me ground myself?' },
-    { label: '☕ Taking a gentle 5-minute break', prompt: 'Just taking a gentle 5-minute break to sit in the garden.' },
-  ];
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500">
-      {/* Left Column: Companion Presence & Bio */}
-      <div className="lg:col-span-1 space-y-4 md:space-y-5">
-        <div className="p-4 md:p-6 rounded-3xl glass-panel border border-emerald-500/20 text-center flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-3">
-          <div className="flex items-center gap-3 lg:flex-col">
-            <div className="flex-shrink-0">
-              <CompanionAvatar mood={metrics.inferredMood} size="sm" showBubble={false} />
-            </div>
-            <div className="text-left lg:text-center">
-              <h3 className="text-base md:text-xl font-bold font-display text-slate-100">Sprout</h3>
-              <span className="text-[11px] md:text-xs text-emerald-400 font-medium block">
-                Mood Companion
-              </span>
-            </div>
-          </div>
+    <div className="w-full max-w-md mx-auto space-y-4 animate-in fade-in duration-500 select-none pb-6">
+      {/* Top Hero Card matching Screenshot 2 */}
+      <div className="p-6 rounded-3xl figma-panel-green text-center flex flex-col items-center shadow-sm">
+        {/* Fern Avatar */}
+        <div className="mb-2">
+          <CompanionAvatar mood={currentMood} size="lg" showBubble={false} />
+        </div>
 
-          {/* Sensed mood status */}
-          <div className="hidden sm:flex lg:w-full py-1.5 px-3 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-xs text-slate-300 items-center justify-between">
-            <span className="text-[11px] text-slate-400 mr-2">Vibe:</span>
-            <span className="font-semibold text-emerald-300 capitalize">{metrics.inferredMood}</span>
-          </div>
+        <h1 className="font-pixel text-xl font-bold text-[#2D3748] tracking-wide mb-0.5">
+          Fern
+        </h1>
+        <p className="text-xs text-[#718096] font-semibold mb-3">
+          Your Forest Companion
+        </p>
 
-          {/* Companion Tone Switcher */}
-          <div className="w-full text-left hidden lg:block">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
-              Companion Tone
+        {/* Mood Badge */}
+        <div className="px-4 py-1 rounded-full bg-[#EAE6DC]/90 text-[#4A5568] text-xs font-bold font-sans">
+          Happy &amp; content
+        </div>
+      </div>
+
+      {/* Card 2: DID YOU KNOW? */}
+      <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm">
+        <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#718096] mb-1">
+          Did you know?
+        </div>
+        <p className="text-xs font-bold text-[#2D3748] flex items-center gap-1.5">
+          <span>Fern waters the garden whenever you take a break.</span>
+          <span className="text-[#60A5FA]">💧</span>
+        </p>
+      </div>
+
+      {/* Card 3: YOUR BOND (4-grid stat boxes) */}
+      <div className="p-5 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm">
+        <div className="text-[10px] font-pixel font-bold uppercase tracking-wider text-[#718096] mb-3">
+          Your Bond
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {/* Streak Box */}
+          <div className="p-3.5 rounded-2xl bg-[#FAF7F0] border border-[#E8E3D7] flex flex-col items-center justify-center text-center">
+            <span className="text-xl mb-0.5">🔥</span>
+            <span className="font-pixel text-sm font-bold text-[#2D3748]">
+              {bondStats.streakDays}d
             </span>
-            <div className="grid grid-cols-2 gap-1.5">
-              {(['nurturing', 'playful', 'zen', 'silent'] as const).map(t => (
-                <button
-                  key={t}
-                  onClick={() => setPersonality(t)}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-medium capitalize transition-all cursor-pointer ${
-                    personality === t
-                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-500/50'
-                      : 'bg-emerald-950/30 text-slate-400 hover:text-slate-200'
-                  }`}
+            <span className="text-[10px] text-[#718096] font-bold">Streak</span>
+          </div>
+
+          {/* Sessions Box */}
+          <div className="p-3.5 rounded-2xl bg-[#FAF7F0] border border-[#E8E3D7] flex flex-col items-center justify-center text-center">
+            <span className="text-xl mb-0.5">🌸</span>
+            <span className="font-pixel text-sm font-bold text-[#2D3748]">
+              {bondStats.sessionsCompleted}
+            </span>
+            <span className="text-[10px] text-[#718096] font-bold">Sessions</span>
+          </div>
+
+          {/* Water Drops Box */}
+          <div className="p-3.5 rounded-2xl bg-[#FAF7F0] border border-[#E8E3D7] flex flex-col items-center justify-center text-center">
+            <span className="text-xl mb-0.5">💧</span>
+            <span className="font-pixel text-sm font-bold text-[#2D3748]">
+              {bondStats.waterDrops}
+            </span>
+            <span className="text-[10px] text-[#718096] font-bold">Water Drops</span>
+          </div>
+
+          {/* Stage Box */}
+          <div className="p-3.5 rounded-2xl bg-[#FAF7F0] border border-[#E8E3D7] flex flex-col items-center justify-center text-center">
+            <span className="text-xl mb-0.5">🌿</span>
+            <span className="font-pixel text-sm font-bold text-[#2D3748]">
+              Stage {bondStats.gardenStage}
+            </span>
+            <span className="text-[10px] text-[#718096] font-bold">Garden</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Affirmation Card */}
+      <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm flex items-center justify-between">
+        <p className="text-xs font-bold text-[#2D3748]">
+          We&apos;ve done {bondStats.sessionsCompleted} session together! I&apos;m so proud of you! 🌸
+        </p>
+        <button
+          onClick={() => setShowChatBox(prev => !prev)}
+          className="ml-2 px-3 py-1.5 rounded-full bg-[#4A7C59] hover:bg-[#3D684A] text-white text-[11px] font-bold transition-all cursor-pointer flex-shrink-0"
+        >
+          {showChatBox ? 'Hide Chat' : 'Talk with Fern'}
+        </button>
+      </div>
+
+      {/* Interactive Chat Stream when toggled */}
+      {showChatBox && (
+        <div className="p-4 rounded-3xl bg-[#FFFDF9] border border-[#EAE6DC] shadow-sm space-y-3 animate-in fade-in duration-200">
+          <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
+            {messages.map(msg => {
+              const isUser = msg.sender === 'user';
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Zero Guilt Principle Card (Desktop) */}
-        <div className="hidden lg:block p-4 rounded-2xl glass-panel border border-emerald-500/15 text-xs text-slate-400 space-y-2">
-          <div className="flex items-center gap-2 text-emerald-300 font-semibold">
-            <Heart className="w-3.5 h-3.5 text-rose-400" />
-            <span>No Form Logging Guilt</span>
-          </div>
-          <p>
-            Sprout listens to your natural mouse kinetics. No mandatory daily questionnaires or 1-to-10 ratings.
-          </p>
-        </div>
-      </div>
-
-      {/* Right Column: Chat Stream */}
-      <div className="lg:col-span-3 flex flex-col h-[520px] sm:h-[580px] md:h-[600px] rounded-3xl glass-panel border border-emerald-500/20 p-4 md:p-5 overflow-hidden justify-between">
-        {/* Chat Messages History */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 md:pr-2">
-          {messages.map(msg => {
-            const isUser = msg.sender === 'user';
-            return (
-              <div
-                key={msg.id}
-                className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
-              >
-                {!isUser && (
-                  <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-300 flex-shrink-0 mt-1">
-                    🌱
-                  </div>
-                )}
-
-                <div className={`max-w-md ${isUser ? 'items-end' : 'items-start'}`}>
-                  {/* Message Bubble */}
+                  {!isUser && (
+                    <div className="w-6 h-6 rounded-full bg-[#EEF4ED] border border-[#DCE8D8] flex items-center justify-center text-xs flex-shrink-0 mt-1">
+                      🌿
+                    </div>
+                  )}
                   <div
-                    className={`p-4 rounded-2xl text-sm leading-relaxed ${
+                    className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[80%] ${
                       isUser
-                        ? 'bg-emerald-600 text-slate-950 font-medium rounded-tr-none'
-                        : 'bg-emerald-950/70 border border-emerald-500/25 text-slate-100 rounded-tl-none backdrop-blur-md'
+                        ? 'bg-[#4A7C59] text-white font-semibold rounded-tr-none'
+                        : 'bg-[#FAF7F0] border border-[#E8E3D7] text-[#2D3748] rounded-tl-none font-medium'
                     }`}
                   >
-                    <p>{msg.text}</p>
-
-                    {/* Action trigger button inside message */}
-                    {msg.suggestedAction && (
-                      <div className="mt-3 pt-2.5 border-t border-emerald-500/20 flex items-center justify-between">
-                        <span className="text-xs text-emerald-300 font-medium">
-                          Suggested Micro-Reset:
-                        </span>
-                        <button
-                          onClick={triggerMicroBreak}
-                          className="px-3 py-1 rounded-full bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/40 text-xs text-emerald-200 font-semibold flex items-center gap-1 transition-all"
-                        >
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>{msg.suggestedAction.label}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Timestamp & Tag */}
-                  <div
-                    className={`flex items-center gap-2 mt-1 px-1 text-[10px] text-slate-500 ${
-                      isUser ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <span>{msg.timestamp}</span>
-                    {msg.tag && !isUser && (
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-950/80 border border-emerald-500/20 text-emerald-400/80 capitalize">
-                        {msg.tag.replace('-', ' ')}
-                      </span>
-                    )}
+                    {msg.text}
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Animated Typing Indicator */}
-          {isTyping && (
-            <div className="flex gap-3 justify-start animate-in fade-in duration-200">
-              <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-300 flex-shrink-0 mt-1">
-                🌱
+            {isTyping && (
+              <div className="flex gap-2 justify-start items-center text-xs text-[#718096] font-medium p-2">
+                <span>Fern is reflecting...</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4A7C59] animate-bounce" />
               </div>
-              <div className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/25 text-slate-100 rounded-tl-none backdrop-blur-md flex items-center gap-2">
-                <span className="text-xs text-emerald-300/90 font-medium">Sprout is reflecting</span>
-                <div className="flex items-center gap-1 ml-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Quick Suggestion Chips */}
-        <div className="pt-3 pb-2 border-t border-emerald-950/80 flex items-center gap-2 overflow-x-auto no-scrollbar">
-          {quickPrompts.map((q, i) => (
+          {/* Chat Input */}
+          <div className="pt-2 flex items-center gap-2 border-t border-[#EAE6DC]">
+            <input
+              type="text"
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="Chat with Fern..."
+              className="flex-1 px-3 py-2 rounded-xl bg-[#FAF7F0] border border-[#E8E3D7] text-xs text-[#2D3748] focus:outline-none focus:border-[#4A7C59]"
+            />
             <button
-              key={i}
-              onClick={() => handleSend(q.prompt)}
-              className="px-3 py-1.5 rounded-full bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/20 text-xs text-emerald-300 whitespace-nowrap transition-all hover:scale-[1.02] flex-shrink-0"
+              onClick={() => handleSend()}
+              disabled={!inputVal.trim()}
+              className="p-2 rounded-xl bg-[#4A7C59] text-white disabled:opacity-50 cursor-pointer"
             >
-              {q.label}
+              <Send className="w-3.5 h-3.5" />
             </button>
-          ))}
+          </div>
         </div>
-
-        {/* Input Bar */}
-        <div className="pt-2 flex items-center gap-2">
-          <input
-            type="text"
-            value={inputVal}
-            onChange={e => setInputVal(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
-            placeholder="Share a thought or just rest with Sprout..."
-            className="flex-1 px-4 py-3 rounded-2xl bg-emerald-950/50 border border-emerald-500/30 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-emerald-400 transition-all backdrop-blur-md"
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!inputVal.trim()}
-            className={`p-3 rounded-2xl transition-all flex items-center justify-center ${
-              inputVal.trim()
-                ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-glow-sm cursor-pointer'
-                : 'bg-emerald-950/50 text-slate-600 cursor-not-allowed border border-emerald-500/10'
-            }`}
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -42,7 +42,7 @@ export const BreakReminderModal: React.FC = () => {
 
         {/* Companion Avatar */}
         <div className="mb-2">
-          <CompanionAvatar mood={metrics.inferredMood === 'stressed' ? 'stressed' : 'serene'} size="md" showBubble={false} />
+          <CompanionAvatar mood={metrics.inferredMood === 'tired' ? 'tired' : 'happy'} size="md" showBubble={false} />
         </div>
 
         {/* Header Tag */}

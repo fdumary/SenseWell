@@ -1,374 +1,252 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { useGarden } from '../../context/GardenContext';
+import React, { useState } from 'react';
 import { useKinetic } from '../../context/KineticContext';
 import { CompanionAvatar } from './CompanionAvatar';
-import { Sparkles, Sun, CloudRain, Moon, Wind, HeartHandshake } from 'lucide-react';
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  alpha: number;
-  color: string;
-}
+import { Timer } from 'lucide-react';
 
 export const MoodGardenCanvas: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const { flora, bloomFactor, weather, dewDrops, bloomFlower, fertilizeGarden } = useGarden();
-  const { metrics, triggerMicroBreak } = useKinetic();
+  const { currentMood } = useKinetic();
 
-  const [mouseCoord, setMouseCoord] = useState<{ x: number; y: number }>({ x: 300, y: 200 });
   const [activeRipple, setActiveRipple] = useState<{ x: number; y: number; id: number } | null>(null);
 
-  // Canvas particle engine for fireflies & spores
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let width = (canvas.width = canvas.parentElement?.clientWidth || 800);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || 450);
-
-    const handleResize = () => {
-      if (!canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight;
-    };
-    window.addEventListener('resize', handleResize);
-
-    const particleCount = metrics.inferredMood === 'deep-flow' ? 45 : metrics.inferredMood === 'stressed' ? 12 : 28;
-    const particles: Particle[] = [];
-    const colors =
-      metrics.inferredMood === 'stressed'
-        ? ['#fb7185', '#94a3b8', '#64748b']
-        : metrics.inferredMood === 'deep-flow'
-        ? ['#34d399', '#6ee7b7', '#fde047', '#38bdf8']
-        : ['#2dd4bf', '#a7f3d0', '#fef08a', '#c084fc'];
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        radius: Math.random() * 2.5 + 1,
-        alpha: Math.random() * 0.7 + 0.3,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      });
-    }
-
-    let rainDrops: Array<{ x: number; y: number; len: number; speed: number }> = [];
-    if (weather === 'storm-drizzle') {
-      for (let i = 0; i < 40; i++) {
-        rainDrops.push({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          len: Math.random() * 12 + 6,
-          speed: Math.random() * 4 + 6,
-        });
-      }
-    }
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      // Rain if stormy/stressed
-      if (weather === 'storm-drizzle') {
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        rainDrops.forEach(r => {
-          ctx.moveTo(r.x, r.y);
-          ctx.lineTo(r.x + 1, r.y + r.len);
-          r.y += r.speed;
-          if (r.y > height) {
-            r.y = -10;
-            r.x = Math.random() * width;
-          }
-        });
-        ctx.stroke();
-      }
-
-      // Bioluminescent Firefly Particles
-      particles.forEach(p => {
-        // Gentle gravity towards mouse
-        const dx = mouseCoord.x - p.x;
-        const dy = mouseCoord.y - p.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 180 && dist > 10) {
-          p.vx += (dx / dist) * 0.015;
-          p.vy += (dy / dist) * 0.015;
-        }
-
-        // Apply speed limits
-        p.vx = Math.max(-1.2, Math.min(1.2, p.vx));
-        p.vy = Math.max(-1.2, Math.min(1.2, p.vy));
-
-        p.x += p.vx;
-        p.y += p.vy;
-
-        // Bounce at boundaries
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        // Draw particle
-        ctx.save();
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.alpha;
-        ctx.shadowBlur = p.radius * 4;
-        ctx.shadowColor = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    render();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [weather, metrics.inferredMood, mouseCoord]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    setMouseCoord({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !e.touches[0]) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    setMouseCoord({
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top,
-    });
-  };
-
   const handleGardenClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     setActiveRipple({ x, y, id: Date.now() });
   };
 
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!containerRef.current || !e.touches[0]) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const y = e.touches[0].clientY - rect.top;
-    setActiveRipple({ x, y, id: Date.now() });
-  };
-
-  const getWeatherIcon = () => {
-    switch (weather) {
-      case 'dappled-sun':
-        return <Sun className="w-4 h-4 text-amber-300" />;
-      case 'storm-drizzle':
-        return <CloudRain className="w-4 h-4 text-rose-300" />;
-      case 'gentle-mist':
-        return <Wind className="w-4 h-4 text-indigo-300" />;
-      case 'starry-zen':
+  const getMoodPill = () => {
+    switch (currentMood) {
+      case 'hyped':
+        return { label: 'Hyped', emoji: '✨' };
+      case 'calm':
+        return { label: 'Calm', emoji: '🍃' };
+      case 'tired':
+        return { label: 'Tired', emoji: '🌙' };
+      case 'meh':
+        return { label: 'Meh', emoji: '☁️' };
+      case 'happy':
       default:
-        return <Moon className="w-4 h-4 text-teal-300" />;
+        return { label: 'Happy', emoji: '🌸' };
     }
   };
 
+  const moodPill = getMoodPill();
+
   return (
     <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onTouchMove={handleTouchMove}
       onClick={handleGardenClick}
-      onTouchStart={handleTouchStart}
-      className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] rounded-3xl overflow-hidden glass-panel border border-emerald-500/20 shadow-2xl select-none group touch-none"
+      className="relative w-full h-[400px] sm:h-[450px] rounded-3xl overflow-hidden shadow-sm border border-[#DCE8D8] select-none cursor-pointer group"
       style={{
-        background:
-          weather === 'storm-drizzle'
-            ? 'radial-gradient(ellipse at 50% 30%, #1e1b2e 0%, #0d1117 75%)'
-            : weather === 'dappled-sun'
-            ? 'radial-gradient(ellipse at 50% 20%, #143526 0%, #08150f 75%)'
-            : weather === 'gentle-mist'
-            ? 'radial-gradient(ellipse at 50% 30%, #17252a 0%, #0a1114 75%)'
-            : 'radial-gradient(ellipse at 50% 25%, #0d281f 0%, #060e0a 75%)',
+        background: 'linear-gradient(180deg, #7EA2C6 0%, #90B4D8 35%, #A7C7E7 60%)',
       }}
     >
-      {/* Background Canvas for Particles & Rain */}
-      <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
+      {/* Sun */}
+      <div className="absolute top-4 right-14 w-16 h-16 rounded-full bg-[#FEF08A]/40 blur-md pointer-events-none" />
+      <div className="absolute top-6 right-16 w-12 h-12 rounded-full bg-[#FEF3C7] opacity-80 pointer-events-none" />
 
-      {/* Ripple Animation on click */}
+      {/* Fluffy Clouds */}
+      <div className="absolute top-3 left-6 w-24 h-12 bg-white/75 rounded-full blur-[1px] pointer-events-none" />
+      <div className="absolute top-6 left-12 w-28 h-10 bg-white/70 rounded-full blur-[1px] pointer-events-none" />
+      <div className="absolute top-4 left-44 w-32 h-14 bg-white/60 rounded-full blur-[1px] pointer-events-none" />
+
+      {/* Top HUD overlay matching Figma */}
+      <div className="absolute top-3.5 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+        {/* Left Timer Pill */}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#4A7C59]/80 backdrop-blur-sm text-white text-xs font-bold font-pixel tracking-wide border border-white/20 shadow-sm">
+          <Timer className="w-3.5 h-3.5" />
+          <span>25m</span>
+        </div>
+
+        {/* Right Mood Badge */}
+        <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/95 text-[#2D3748] text-xs font-bold shadow-sm border border-[#EAE6DC]">
+          <span>{moodPill.emoji}</span>
+          <span className="capitalize">{moodPill.label}</span>
+        </div>
+      </div>
+
+      {/* Ripple Animation on tap */}
       {activeRipple && (
         <div
           key={activeRipple.id}
-          className="absolute rounded-full border border-emerald-400/40 pointer-events-none animate-ping"
+          className="absolute rounded-full border-2 border-white/60 pointer-events-none animate-ping z-30"
           style={{
-            left: activeRipple.x - 25,
-            top: activeRipple.y - 25,
-            width: 50,
-            height: 50,
+            left: activeRipple.x - 20,
+            top: activeRipple.y - 20,
+            width: 40,
+            height: 40,
           }}
         />
       )}
 
-      {/* Top Garden Ambient HUD */}
-      <div className="absolute top-4 left-5 right-5 z-20 flex items-center justify-between pointer-events-auto">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-xs text-emerald-200 backdrop-blur-md">
-            {getWeatherIcon()}
-            <span className="capitalize font-medium">{weather.replace('-', ' ')}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Bloom: {Math.round(bloomFactor * 100)}%</span>
-          </div>
+      {/* Scenic Vector Landscape matching Figma Screenshot 3 */}
+      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 400 450">
+        <defs>
+          <linearGradient id="hillBack" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#A4CCA0" />
+            <stop offset="100%" stopColor="#8FB88A" />
+          </linearGradient>
+          <linearGradient id="hillMid" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#7EAA75" />
+            <stop offset="100%" stopColor="#67945E" />
+          </linearGradient>
+          <linearGradient id="grassFront" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#55884D" />
+            <stop offset="100%" stopColor="#46733E" />
+          </linearGradient>
+        </defs>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-950/50 border border-emerald-500/20 text-xs text-emerald-300/80">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>{dewDrops} Dewdrops</span>
-          </div>
-        </div>
+        {/* Distant Hills Layer 1 */}
+        <path d="M -10 180 Q 80 120 200 155 T 410 130 L 410 450 L -10 450 Z" fill="url(#hillBack)" />
 
-        {/* Quick Garden Actions */}
-        <div className="flex items-center gap-2">
-          {metrics.inferredMood === 'stressed' && (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                triggerMicroBreak();
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-semibold hover:bg-rose-500/30 transition-all shadow-glow-rose animate-pulse"
-            >
-              <HeartHandshake className="w-3.5 h-3.5" />
-              <span>Calm Sprout (Take Break)</span>
-            </button>
-          )}
+        {/* Distant Trees */}
+        <g fill="#4A7545">
+          <ellipse cx="68" cy="140" rx="6" ry="12" />
+          <ellipse cx="130" cy="130" rx="7" ry="14" />
+          <ellipse cx="275" cy="130" rx="7" ry="13" />
+          <ellipse cx="330" cy="170" rx="9" ry="17" />
+          <ellipse cx="365" cy="160" rx="10" ry="19" />
+        </g>
 
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              fertilizeGarden();
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-900/60 border border-emerald-500/30 text-xs text-emerald-200 hover:bg-emerald-800/80 transition-all"
-            title="Nourish all plants with dewdrops"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
-            <span className="hidden sm:inline">Nourish Garden</span>
-          </button>
-        </div>
-      </div>
+        {/* Middle Hills Layer 2 */}
+        <path d="M -10 205 Q 120 160 260 195 T 410 175 L 410 450 L -10 450 Z" fill="url(#hillMid)" />
 
-      {/* Procedural Living Flora Layer */}
-      <svg className="absolute inset-0 w-full h-full z-10 pointer-events-none">
-        {/* Hill / Ground Grass Curves */}
+        {/* Mid-ground Trees */}
+        <g fill="#3D683A">
+          <ellipse cx="30" cy="185" rx="12" ry="20" />
+          <ellipse cx="65" cy="195" rx="10" ry="16" />
+          <ellipse cx="108" cy="190" rx="11" ry="18" />
+        </g>
+
+        {/* Foreground Meadow Base */}
+        <path d="M -10 230 Q 180 215 410 225 L 410 450 L -10 450 Z" fill="url(#grassFront)" />
+
+        {/* Winding Cobblestone / Dirt Path in Center */}
         <path
-          d="M -20 460 Q 200 380 450 420 T 900 390 L 900 500 L -20 500 Z"
-          fill="rgba(6, 40, 28, 0.75)"
-        />
-        <path
-          d="M -20 470 Q 300 410 600 440 T 1000 410 L 1000 500 L -20 500 Z"
-          fill="rgba(4, 25, 17, 0.9)"
+          d="M 185 190 C 180 260 170 330 150 450 L 205 450 C 220 330 215 260 205 190 Z"
+          fill="#D6C4A2"
+          stroke="#C4B08C"
+          strokeWidth="1.5"
         />
 
-        {/* Mossy Center Pedestal for Companion */}
-        <ellipse cx="50%" cy="84%" rx="90" ry="24" fill="#042217" stroke="rgba(52, 211, 153, 0.3)" strokeWidth="2" />
-        <ellipse cx="50%" cy="83%" rx="70" ry="16" fill="#063a28" />
+        {/* Path Stepping Stones */}
+        <g fill="#E3D5B9" opacity="0.8">
+          <ellipse cx="193" cy="220" rx="8" ry="4" />
+          <ellipse cx="190" cy="250" rx="9" ry="5" />
+          <ellipse cx="186" cy="285" rx="10" ry="6" />
+          <ellipse cx="180" cy="325" rx="11" ry="6.5" />
+          <ellipse cx="174" cy="370" rx="13" ry="7" />
+          <ellipse cx="168" cy="415" rx="15" ry="8" />
+        </g>
 
-        {/* Individual Living Flowers */}
-        {flora.map(flower => {
-          const isBloom = flower.bloomProgress > 0.5;
-          const scale = 0.6 + flower.bloomProgress * 0.45;
-          const stemCurve = isBloom ? 0 : 15; // Wilt bends stem
-          const petalOpacity = Math.max(0.35, flower.bloomProgress);
+        {/* --- LEFT WOODEN TRELLIS WITH FLOWERS --- */}
+        <g transform="translate(40, 215)">
+          {/* Wood Lattice */}
+          <rect x="0" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="25" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="50" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="-4" y="8" width="62" height="5" fill="#C48E59" rx="1" />
+          <rect x="-4" y="24" width="62" height="5" fill="#C48E59" rx="1" />
+          <rect x="-4" y="40" width="62" height="5" fill="#C48E59" rx="1" />
 
-          return (
-            <g
-              key={flower.id}
-              className="pointer-events-auto cursor-pointer transition-transform duration-700 hover:scale-110"
-              onClick={e => {
-                e.stopPropagation();
-                bloomFlower(flower.id);
-              }}
-            >
-              {/* Stem */}
-              <path
-                d={`M ${flower.x}% ${flower.y}% Q ${flower.x + stemCurve / 5}% ${flower.y + 12}% ${flower.x}% ${flower.y + 24}%`}
-                fill="none"
-                stroke={isBloom ? '#10b981' : '#475569'}
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
+          {/* Climbing Blossom Foliage */}
+          <ellipse cx="28" cy="30" rx="32" ry="14" fill="#3D683A" />
+          {/* Pink and Lavender Flowers */}
+          <circle cx="10" cy="25" r="7" fill="#F472B6" />
+          <circle cx="10" cy="25" r="2.5" fill="#FDE047" />
+          <circle cx="28" cy="32" r="8" fill="#FBCFE8" />
+          <circle cx="28" cy="32" r="3" fill="#FDE047" />
+          <circle cx="45" cy="28" r="7.5" fill="#C4B5FD" />
+          <circle cx="45" cy="28" r="2.5" fill="#FDE047" />
+          <circle cx="20" cy="40" r="6" fill="#F472B6" />
+          <circle cx="36" cy="42" r="6" fill="#FBCFE8" />
+        </g>
 
-              {/* Leaves on stem */}
-              <ellipse
-                cx={`${flower.x - 1.5}%`}
-                cy={`${flower.y + 10}%`}
-                rx="6"
-                ry="3"
-                fill={isBloom ? '#34d399' : '#64748b'}
-                transform={`rotate(${isBloom ? -25 : 15} ${flower.x * 8} ${flower.y * 4})`}
-              />
+        {/* --- RIGHT WOODEN TRELLIS WITH FLOWERS --- */}
+        <g transform="translate(270, 215)">
+          {/* Wood Lattice */}
+          <rect x="0" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="25" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="50" y="0" width="6" height="50" fill="#C48E59" rx="1" />
+          <rect x="-4" y="8" width="62" height="5" fill="#C48E59" rx="1" />
+          <rect x="-4" y="24" width="62" height="5" fill="#C48E59" rx="1" />
+          <rect x="-4" y="40" width="62" height="5" fill="#C48E59" rx="1" />
 
-              {/* Flower Blossom Head */}
-              <g transform={`translate(${flower.x * 8}, ${flower.y * 4}) scale(${scale})`}>
-                {/* Petals */}
-                {Array.from({ length: flower.petals }).map((_, i) => {
-                  const angle = (i * 360) / flower.petals;
-                  const petalColor = isBloom
-                    ? `hsl(${flower.hue}, 80%, ${60 + (i % 2) * 10}%)`
-                    : '#64748b';
-                  return (
-                    <ellipse
-                      key={i}
-                      cx="0"
-                      cy={isBloom ? -16 : -8}
-                      rx={isBloom ? 7 : 4}
-                      ry={isBloom ? 14 : 9}
-                      fill={petalColor}
-                      fillOpacity={petalOpacity}
-                      transform={`rotate(${angle})`}
-                      stroke="rgba(255,255,255,0.15)"
-                      strokeWidth="0.5"
-                    />
-                  );
-                })}
-                {/* Flower Core Glowing Center */}
-                <circle cx="0" cy="0" r={isBloom ? 6 : 4} fill={isBloom ? '#fde047' : '#94a3b8'} />
-                {isBloom && (
-                  <circle cx="0" cy="0" r="10" fill="#fde047" fillOpacity="0.3" className="animate-ping" />
-                )}
-              </g>
-            </g>
-          );
-        })}
+          {/* Climbing Blossom Foliage */}
+          <ellipse cx="28" cy="30" rx="32" ry="14" fill="#3D683A" />
+          {/* Pink and Purple Flowers */}
+          <circle cx="12" cy="28" r="8" fill="#C4B5FD" />
+          <circle cx="12" cy="28" r="3" fill="#FDE047" />
+          <circle cx="30" cy="24" r="7" fill="#F472B6" />
+          <circle cx="30" cy="24" r="2.5" fill="#FDE047" />
+          <circle cx="46" cy="32" r="7.5" fill="#FBCFE8" />
+          <circle cx="46" cy="32" r="2.5" fill="#FDE047" />
+          <circle cx="22" cy="38" r="6" fill="#FBCFE8" />
+          <circle cx="38" cy="40" r="6" fill="#F472B6" />
+        </g>
+
+        {/* --- BUTTERFLIES FLUTTERING --- */}
+        {/* Left Pink Butterfly */}
+        <g transform="translate(85, 205)" className="animate-flutter">
+          <ellipse cx="-4" cy="-4" rx="6" ry="8" fill="#FBCFE8" transform="rotate(-20 -4 -4)" />
+          <ellipse cx="4" cy="-4" rx="6" ry="8" fill="#FBCFE8" transform="rotate(20 4 -4)" />
+          <line x1="0" y1="-8" x2="0" y2="4" stroke="#4B5563" strokeWidth="1" />
+        </g>
+        {/* Right Lavender Butterfly */}
+        <g transform="translate(260, 220)" className="animate-flutter">
+          <ellipse cx="-4" cy="-4" rx="6" ry="8" fill="#DDD6FE" transform="rotate(-20 -4 -4)" />
+          <ellipse cx="4" cy="-4" rx="6" ry="8" fill="#DDD6FE" transform="rotate(20 4 -4)" />
+          <line x1="0" y1="-8" x2="0" y2="4" stroke="#4B5563" strokeWidth="1" />
+        </g>
+
+        {/* --- LITTLE LILY POND (Bottom Right) --- */}
+        <g transform="translate(320, 360)">
+          <ellipse cx="30" cy="18" rx="35" ry="16" fill="#7EADC7" stroke="#A4CDDD" strokeWidth="1.5" />
+          {/* Lily pad */}
+          <ellipse cx="25" cy="18" rx="10" ry="5" fill="#4B8845" />
+          <circle cx="28" cy="16" r="3" fill="#FDE047" />
+        </g>
+
+        {/* --- MUSHROOMS & WILD FLOWERS IN MEADOW --- */}
+        {/* Red Mushrooms */}
+        <g transform="translate(230, 245)">
+          <rect x="2" y="5" width="3" height="6" fill="#E2DDD0" />
+          <path d="M 0 5 Q 3.5 0 7 5 Z" fill="#EF4444" />
+          <circle cx="3.5" cy="3" r="0.7" fill="#FFFFFF" />
+        </g>
+        <g transform="translate(150, 310)">
+          <rect x="2" y="5" width="2.5" height="5" fill="#E2DDD0" />
+          <path d="M 0 5 Q 3 0 6 5 Z" fill="#EF4444" />
+          <circle cx="3" cy="3" r="0.6" fill="#FFFFFF" />
+        </g>
+
+        {/* Meadow Daisies */}
+        <circle cx="130" cy="275" r="3.5" fill="#FDE2E4" />
+        <circle cx="130" cy="275" r="1.2" fill="#FDE047" />
+        <circle cx="240" cy="290" r="3.5" fill="#E0AAFF" />
+        <circle cx="240" cy="290" r="1.2" fill="#FDE047" />
+        <circle cx="260" cy="330" r="4" fill="#BEE1E6" />
+        <circle cx="260" cy="330" r="1.5" fill="#FDE047" />
+        <circle cx="105" cy="340" r="4" fill="#FDE2E4" />
+        <circle cx="105" cy="340" r="1.5" fill="#FDE047" />
+        <circle cx="75" cy="380" r="4.5" fill="#BEE1E6" />
+        <circle cx="75" cy="380" r="1.5" fill="#FDE047" />
+
+        {/* Wooden Sign on Left "my garden" */}
+        <g transform="translate(10, 255)">
+          <rect x="18" y="16" width="4" height="24" fill="#8C653C" rx="1" />
+          <rect x="0" y="0" width="38" height="20" fill="#B88A58" stroke="#8C653C" strokeWidth="1" rx="3" />
+          <text x="5" y="12" fill="#4B331A" fontSize="6.5" fontFamily="monospace" fontWeight="bold">my garden</text>
+        </g>
       </svg>
 
-      {/* Companion Character Positioned in Center */}
-      <div className="absolute left-1/2 bottom-8 -translate-x-1/2 z-20">
+      {/* Fern Walking in the Path */}
+      <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-20">
         <CompanionAvatar
-          mood={metrics.inferredMood}
-          size="lg"
-          showBubble={true}
-          onInteract={() => {
-            fertilizeGarden();
-          }}
+          mood={currentMood}
+          size="sm"
+          showBubble={false}
         />
-      </div>
-
-      {/* Bottom Hint */}
-      <div className="absolute bottom-3 right-5 z-20 text-[11px] text-emerald-400/60 flex items-center gap-1.5 pointer-events-none">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-        <span>Garden blooms with your smooth kinetic flow</span>
       </div>
     </div>
   );

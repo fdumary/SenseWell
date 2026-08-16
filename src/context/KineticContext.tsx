@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { KineticMetrics, MoodState, UserPresenceStatus } from '../types';
+import { KineticMetrics, MoodState, UserPresenceStatus, BondStats } from '../types';
 
 interface KineticContextType {
   metrics: KineticMetrics;
@@ -7,6 +7,8 @@ interface KineticContextType {
   recentJitters: number[];
   presenceStatus: UserPresenceStatus;
   setPresenceStatus: (status: UserPresenceStatus) => void;
+  currentMood: MoodState;
+  setMood: (mood: MoodState) => void;
   simulateMood: (mood: MoodState | 'live') => void;
   resetTelemetry: () => void;
   isSimulating: boolean;
@@ -17,6 +19,17 @@ interface KineticContextType {
   isBreakReminderOpen: boolean;
   setIsBreakReminderOpen: (open: boolean) => void;
   triggerBreakReminder: () => void;
+  // Focus Session Overlay State
+  isFocusSessionActive: boolean;
+  isSessionPaused: boolean;
+  sessionRemainingSeconds: number;
+  startFocusSession: () => void;
+  pauseFocusSession: () => void;
+  resumeFocusSession: () => void;
+  endFocusSession: () => void;
+  // Bond & Progression Stats
+  bondStats: BondStats;
+  addWaterDrop: () => void;
 }
 
 const defaultMetrics: KineticMetrics = {
@@ -26,7 +39,7 @@ const defaultMetrics: KineticMetrics = {
   pauseFrequency: 4.2,
   smoothnessScore: 88,
   tensionScore: 16,
-  inferredMood: 'serene',
+  inferredMood: 'happy',
   sampleCount: 0,
   isSimulated: false,
 };
@@ -35,6 +48,7 @@ const KineticContext = createContext<KineticContextType | undefined>(undefined);
 
 export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [metrics, setMetrics] = useState<KineticMetrics>(defaultMetrics);
+  const [currentMood, setCurrentMood] = useState<MoodState>('happy');
   const [presenceStatus, setPresenceStatus] = useState<UserPresenceStatus>('working');
   const [recentVelocities, setRecentVelocities] = useState<number[]>([0.2, 0.4, 0.5, 0.3, 0.45, 0.6, 0.4]);
   const [recentJitters, setRecentJitters] = useState<number[]>([10, 15, 12, 8, 14, 11, 13]);
@@ -42,26 +56,40 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isBreathingModalOpen, setIsBreathingModalOpen] = useState<boolean>(false);
   const [isBreakReminderOpen, setIsBreakReminderOpen] = useState<boolean>(false);
 
+  // Focus Session State
+  const [isFocusSessionActive, setIsFocusSessionActive] = useState<boolean>(false);
+  const [isSessionPaused, setIsSessionPaused] = useState<boolean>(false);
+  const [sessionRemainingSeconds, setSessionRemainingSeconds] = useState<number>(25 * 60);
+
+  // Bond Stats matching Figma Prototype (25m today, 1 break, 3d streak, 3 water drops, stage 2)
+  const [bondStats, setBondStats] = useState<BondStats>({
+    streakDays: 3,
+    sessionsCompleted: 1,
+    waterDrops: 3,
+    gardenStage: 2,
+    focusMinutesToday: 25,
+    dailyGoalHours: 4,
+    breaksToday: 1,
+  });
+
   // Mouse trajectory tracking refs
   const lastPos = useRef<{ x: number; y: number; time: number } | null>(null);
   const lastAngle = useRef<number | null>(null);
   const samplesRef = useRef<Array<{ v: number; jitter: number; t: number }>>([]);
-  const lastMoveTimeRef = useRef<number>(Date.now());
 
   const calculateInferredMood = (jitter: number, velocity: number, tension: number): MoodState => {
-    if (tension > 65 || jitter > 55) return 'stressed';
-    if (tension < 30 && velocity > 0.3 && jitter < 28) return 'deep-flow';
-    if (tension < 25 && jitter < 20) return 'serene';
-    if (velocity < 0.15 && tension > 40) return 'fatigued';
-    return 'wandering';
+    if (velocity > 0.8 && tension < 35) return 'hyped';
+    if (tension > 55 || jitter > 50) return 'meh';
+    if (velocity < 0.18 && tension > 35) return 'tired';
+    if (tension < 20 && jitter < 15) return 'calm';
+    return 'happy';
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (activeSimulationState !== null) return; // In simulation mode, skip live override
+    if (activeSimulationState !== null) return;
 
     const now = performance.now();
     const currentPos = { x: e.clientX, y: e.clientY, time: now };
-    lastMoveTimeRef.current = Date.now();
 
     if (!lastPos.current) {
       lastPos.current = currentPos;
@@ -73,16 +101,13 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const dy = currentPos.y - lastPos.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
-    // Velocity in px per millisecond
     const instantVelocity = dist / dt;
 
-    // Angle change (jitter detection)
     let currentJitter = 0;
     const currentAngle = Math.atan2(dy, dx);
     if (lastAngle.current !== null && dist > 3) {
       let angleDiff = Math.abs(currentAngle - lastAngle.current);
       if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-      // Frequent sharp turns (> 70 degrees) over short distance = high jitter
       currentJitter = (angleDiff / Math.PI) * 100;
     }
 
@@ -94,7 +119,6 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
       samplesRef.current.shift();
     }
 
-    // Process every few samples
     if (samplesRef.current.length >= 6) {
       const avgVel = samplesRef.current.reduce((acc, s) => acc + s.v, 0) / samplesRef.current.length;
       const avgJitter = samplesRef.current.reduce((acc, s) => acc + s.jitter, 0) / samplesRef.current.length;
@@ -115,6 +139,7 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isSimulated: false,
       }));
 
+      setCurrentMood(mood);
       setRecentVelocities(prev => [...prev.slice(-15), Number(avgVel.toFixed(2))]);
       setRecentJitters(prev => [...prev.slice(-15), Math.round(avgJitter)]);
     }
@@ -125,7 +150,36 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [handleMouseMove]);
 
-  // Simulation mode switcher
+  // Focus Timer Countdown effect
+  useEffect(() => {
+    let timer: number | null = null;
+    if (isFocusSessionActive && !isSessionPaused) {
+      timer = window.setInterval(() => {
+        setSessionRemainingSeconds(prev => {
+          if (prev <= 1) {
+            setIsFocusSessionActive(false);
+            setBondStats(b => ({
+              ...b,
+              sessionsCompleted: b.sessionsCompleted + 1,
+              focusMinutesToday: b.focusMinutesToday + 25,
+              waterDrops: b.waterDrops + 1,
+            }));
+            return 25 * 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isFocusSessionActive, isSessionPaused]);
+
+  const setMood = (mood: MoodState) => {
+    setCurrentMood(mood);
+    setMetrics(prev => ({ ...prev, inferredMood: mood }));
+  };
+
   const simulateMood = (mood: MoodState | 'live') => {
     if (mood === 'live') {
       setActiveSimulationState(null);
@@ -134,93 +188,14 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     setActiveSimulationState(mood);
-    let simulated: KineticMetrics;
-
-    switch (mood) {
-      case 'stressed':
-        simulated = {
-          velocity: 1.85,
-          acceleration: 0.32,
-          jitterIndex: 78,
-          pauseFrequency: 1.2,
-          smoothnessScore: 24,
-          tensionScore: 82,
-          inferredMood: 'stressed',
-          sampleCount: 150,
-          isSimulated: true,
-        };
-        setRecentJitters([45, 60, 85, 72, 90, 80, 88, 76]);
-        setRecentVelocities([1.2, 1.9, 2.4, 1.7, 2.1, 1.8]);
-        break;
-      case 'deep-flow':
-        simulated = {
-          velocity: 0.85,
-          acceleration: 0.03,
-          jitterIndex: 14,
-          pauseFrequency: 5.8,
-          smoothnessScore: 92,
-          tensionScore: 12,
-          inferredMood: 'deep-flow',
-          sampleCount: 220,
-          isSimulated: true,
-        };
-        setRecentJitters([12, 15, 11, 14, 10, 16, 12]);
-        setRecentVelocities([0.8, 0.9, 0.85, 0.82, 0.88]);
-        break;
-      case 'fatigued':
-        simulated = {
-          velocity: 0.18,
-          acceleration: 0.01,
-          jitterIndex: 38,
-          pauseFrequency: 11.4,
-          smoothnessScore: 54,
-          tensionScore: 48,
-          inferredMood: 'fatigued',
-          sampleCount: 95,
-          isSimulated: true,
-        };
-        setRecentJitters([30, 42, 35, 40, 48, 32]);
-        setRecentVelocities([0.2, 0.15, 0.12, 0.22, 0.14]);
-        break;
-      case 'wandering':
-        simulated = {
-          velocity: 0.52,
-          acceleration: 0.08,
-          jitterIndex: 44,
-          pauseFrequency: 4.0,
-          smoothnessScore: 61,
-          tensionScore: 41,
-          inferredMood: 'wandering',
-          sampleCount: 130,
-          isSimulated: true,
-        };
-        setRecentJitters([38, 45, 41, 50, 42, 46]);
-        setRecentVelocities([0.4, 0.6, 0.5, 0.7, 0.45]);
-        break;
-      case 'serene':
-      default:
-        simulated = {
-          velocity: 0.38,
-          acceleration: 0.02,
-          jitterIndex: 8,
-          pauseFrequency: 4.8,
-          smoothnessScore: 95,
-          tensionScore: 8,
-          inferredMood: 'serene',
-          sampleCount: 180,
-          isSimulated: true,
-        };
-        setRecentJitters([8, 6, 9, 7, 10, 8, 6]);
-        setRecentVelocities([0.35, 0.4, 0.38, 0.36, 0.42]);
-        break;
-    }
-
-    setMetrics(simulated);
+    setCurrentMood(mood);
+    setMetrics(prev => ({ ...prev, inferredMood: mood, isSimulated: true }));
   };
 
   const resetTelemetry = () => {
     setActiveSimulationState(null);
     setMetrics(defaultMetrics);
+    setCurrentMood('happy');
   };
 
   const triggerMicroBreak = () => {
@@ -231,6 +206,30 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsBreakReminderOpen(true);
   };
 
+  const startFocusSession = () => {
+    setSessionRemainingSeconds(23 * 60 + 47); // Start around 23:47 like mockup
+    setIsSessionPaused(false);
+    setIsFocusSessionActive(true);
+    setPresenceStatus('working');
+  };
+
+  const pauseFocusSession = () => {
+    setIsSessionPaused(true);
+  };
+
+  const resumeFocusSession = () => {
+    setIsSessionPaused(false);
+  };
+
+  const endFocusSession = () => {
+    setIsFocusSessionActive(false);
+    setIsSessionPaused(false);
+  };
+
+  const addWaterDrop = () => {
+    setBondStats(prev => ({ ...prev, waterDrops: prev.waterDrops + 1 }));
+  };
+
   return (
     <KineticContext.Provider
       value={{
@@ -239,6 +238,8 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         recentJitters,
         presenceStatus,
         setPresenceStatus,
+        currentMood,
+        setMood,
         simulateMood,
         resetTelemetry,
         isSimulating: activeSimulationState !== null,
@@ -249,6 +250,15 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isBreakReminderOpen,
         setIsBreakReminderOpen,
         triggerBreakReminder,
+        isFocusSessionActive,
+        isSessionPaused,
+        sessionRemainingSeconds,
+        startFocusSession,
+        pauseFocusSession,
+        resumeFocusSession,
+        endFocusSession,
+        bondStats,
+        addWaterDrop,
       }}
     >
       {children}
