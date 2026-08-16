@@ -14,6 +14,9 @@ interface KineticContextType {
   triggerMicroBreak: () => void;
   isBreathingModalOpen: boolean;
   setIsBreathingModalOpen: (open: boolean) => void;
+  isBreakReminderOpen: boolean;
+  setIsBreakReminderOpen: (open: boolean) => void;
+  triggerBreakReminder: () => void;
 }
 
 const defaultMetrics: KineticMetrics = {
@@ -37,6 +40,7 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [recentJitters, setRecentJitters] = useState<number[]>([10, 15, 12, 8, 14, 11, 13]);
   const [activeSimulationState, setActiveSimulationState] = useState<MoodState | null>(null);
   const [isBreathingModalOpen, setIsBreathingModalOpen] = useState<boolean>(false);
+  const [isBreakReminderOpen, setIsBreakReminderOpen] = useState<boolean>(false);
 
   // Mouse trajectory tracking refs
   const lastPos = useRef<{ x: number; y: number; time: number } | null>(null);
@@ -223,6 +227,10 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsBreathingModalOpen(true);
   };
 
+  const triggerBreakReminder = () => {
+    setIsBreakReminderOpen(true);
+  };
+
   return (
     <KineticContext.Provider
       value={{
@@ -238,6 +246,9 @@ export const KineticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         triggerMicroBreak,
         isBreathingModalOpen,
         setIsBreathingModalOpen,
+        isBreakReminderOpen,
+        setIsBreakReminderOpen,
+        triggerBreakReminder,
       }}
     >
       {children}

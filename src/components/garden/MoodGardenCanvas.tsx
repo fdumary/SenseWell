@@ -148,11 +148,28 @@ export const MoodGardenCanvas: React.FC = () => {
     });
   };
 
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !e.touches[0]) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setMouseCoord({
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top,
+    });
+  };
+
   const handleGardenClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    setActiveRipple({ x, y, id: Date.now() });
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || !e.touches[0]) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
     setActiveRipple({ x, y, id: Date.now() });
   };
 
@@ -174,8 +191,10 @@ export const MoodGardenCanvas: React.FC = () => {
     <div
       ref={containerRef}
       onMouseMove={handleMouseMove}
+      onTouchMove={handleTouchMove}
       onClick={handleGardenClick}
-      className="relative w-full h-[460px] rounded-3xl overflow-hidden glass-panel border border-emerald-500/20 shadow-2xl select-none group"
+      onTouchStart={handleTouchStart}
+      className="relative w-full h-[360px] sm:h-[420px] md:h-[460px] rounded-3xl overflow-hidden glass-panel border border-emerald-500/20 shadow-2xl select-none group touch-none"
       style={{
         background:
           weather === 'storm-drizzle'

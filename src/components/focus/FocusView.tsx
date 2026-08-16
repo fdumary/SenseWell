@@ -7,7 +7,7 @@ import { Zap, Compass, Wind, AlertCircle, ShieldCheck, Heart, Sparkles } from 'l
 import { MoodState } from '../../types';
 
 export const FocusView: React.FC = () => {
-  const { metrics, simulateMood, activeSimulationState, triggerMicroBreak, recentVelocities } = useKinetic();
+  const { metrics, simulateMood, activeSimulationState, triggerMicroBreak, triggerBreakReminder, recentVelocities } = useKinetic();
   const { gardenHealth } = useGarden();
 
   const getMoodBadge = (mood: MoodState) => {
@@ -96,6 +96,17 @@ export const FocusView: React.FC = () => {
             }`}
           >
             Serene
+          </button>
+
+          <span className="text-slate-600 mx-1">|</span>
+
+          {/* Test Break Reminder Modal button */}
+          <button
+            onClick={triggerBreakReminder}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 transition-all cursor-pointer flex items-center gap-1"
+            title="Preview Break Reminder Modal"
+          >
+            <span>☕ Test Break Alert</span>
           </button>
         </div>
       </div>

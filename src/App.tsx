@@ -7,6 +7,7 @@ import { FocusView } from './components/focus/FocusView';
 import { ChatView } from './components/chat/ChatView';
 import { StatsView } from './components/stats/StatsView';
 import { BreathingModal } from './components/modals/BreathingModal';
+import { BreakReminderModal } from './components/modals/BreakReminderModal';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('focus');
@@ -22,7 +23,7 @@ export const AppContent: React.FC = () => {
         <TopHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Dynamic Section View */}
-        <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto pb-20 md:pb-8">
+        <main className="flex-1 p-3 sm:p-5 md:p-8 max-w-7xl w-full mx-auto pb-24 md:pb-8">
           {activeTab === 'focus' && <FocusView />}
           {activeTab === 'chat' && <ChatView />}
           {activeTab === 'stats' && <StatsView />}
@@ -31,6 +32,9 @@ export const AppContent: React.FC = () => {
 
       {/* 4-7-8 Breathing & Grounding Sanctuary Modal */}
       <BreathingModal />
+
+      {/* Break Reminder Modal */}
+      <BreakReminderModal />
     </div>
   );
 };

@@ -11,6 +11,7 @@ export const ChatView: React.FC = () => {
 
   const [inputVal, setInputVal] = useState('');
   const [personality, setPersonality] = useState<'nurturing' | 'playful' | 'zen' | 'silent'>('nurturing');
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -38,11 +39,11 @@ export const ChatView: React.FC = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   const handleSend = (textToSend?: string) => {
     const text = textToSend || inputVal;
-    if (!text.trim()) return;
+    if (!text.trim() || isTyping) return;
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -53,6 +54,7 @@ export const ChatView: React.FC = () => {
 
     setMessages(prev => [...prev, userMsg]);
     if (!textToSend) setInputVal('');
+    setIsTyping(true);
 
     // Generate contextually empathetic companion reply
     setTimeout(() => {
@@ -93,7 +95,8 @@ export const ChatView: React.FC = () => {
       };
 
       setMessages(prev => [...prev, companionMsg]);
-    }, 800);
+      setIsTyping(false);
+    }, 1200);
   };
 
   const quickPrompts = [
@@ -104,25 +107,30 @@ export const ChatView: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 animate-in fade-in duration-500">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 animate-in fade-in duration-500">
       {/* Left Column: Companion Presence & Bio */}
-      <div className="lg:col-span-1 space-y-5">
-        <div className="p-6 rounded-3xl glass-panel border border-emerald-500/20 text-center flex flex-col items-center">
-          <div className="mb-2">
-            <CompanionAvatar mood={metrics.inferredMood} size="md" showBubble={false} />
+      <div className="lg:col-span-1 space-y-4 md:space-y-5">
+        <div className="p-4 md:p-6 rounded-3xl glass-panel border border-emerald-500/20 text-center flex flex-row lg:flex-col items-center justify-between lg:justify-center gap-3">
+          <div className="flex items-center gap-3 lg:flex-col">
+            <div className="flex-shrink-0">
+              <CompanionAvatar mood={metrics.inferredMood} size="sm" showBubble={false} />
+            </div>
+            <div className="text-left lg:text-center">
+              <h3 className="text-base md:text-xl font-bold font-display text-slate-100">Sprout</h3>
+              <span className="text-[11px] md:text-xs text-emerald-400 font-medium block">
+                Mood Companion
+              </span>
+            </div>
           </div>
 
-          <h3 className="text-xl font-bold font-display text-slate-100">Sprout</h3>
-          <span className="text-xs text-emerald-400 font-medium mb-3">Garden Mood Companion</span>
-
           {/* Sensed mood status */}
-          <div className="w-full py-2 px-3 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-xs text-slate-300 flex items-center justify-between mb-4">
-            <span>Sensed Vibe:</span>
+          <div className="hidden sm:flex lg:w-full py-1.5 px-3 rounded-xl bg-emerald-950/60 border border-emerald-500/20 text-xs text-slate-300 items-center justify-between">
+            <span className="text-[11px] text-slate-400 mr-2">Vibe:</span>
             <span className="font-semibold text-emerald-300 capitalize">{metrics.inferredMood}</span>
           </div>
 
           {/* Companion Tone Switcher */}
-          <div className="w-full text-left">
+          <div className="w-full text-left hidden lg:block">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 block">
               Companion Tone
             </span>
@@ -131,7 +139,7 @@ export const ChatView: React.FC = () => {
                 <button
                   key={t}
                   onClick={() => setPersonality(t)}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-medium capitalize transition-all ${
+                  className={`py-1.5 px-2 rounded-xl text-xs font-medium capitalize transition-all cursor-pointer ${
                     personality === t
                       ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-500/50'
                       : 'bg-emerald-950/30 text-slate-400 hover:text-slate-200'
@@ -144,8 +152,8 @@ export const ChatView: React.FC = () => {
           </div>
         </div>
 
-        {/* Zero Guilt Principle Card */}
-        <div className="p-4 rounded-2xl glass-panel border border-emerald-500/15 text-xs text-slate-400 space-y-2">
+        {/* Zero Guilt Principle Card (Desktop) */}
+        <div className="hidden lg:block p-4 rounded-2xl glass-panel border border-emerald-500/15 text-xs text-slate-400 space-y-2">
           <div className="flex items-center gap-2 text-emerald-300 font-semibold">
             <Heart className="w-3.5 h-3.5 text-rose-400" />
             <span>No Form Logging Guilt</span>
@@ -157,9 +165,9 @@ export const ChatView: React.FC = () => {
       </div>
 
       {/* Right Column: Chat Stream */}
-      <div className="lg:col-span-3 flex flex-col h-[600px] rounded-3xl glass-panel border border-emerald-500/20 p-5 overflow-hidden justify-between">
+      <div className="lg:col-span-3 flex flex-col h-[520px] sm:h-[580px] md:h-[600px] rounded-3xl glass-panel border border-emerald-500/20 p-4 md:p-5 overflow-hidden justify-between">
         {/* Chat Messages History */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 md:pr-2">
           {messages.map(msg => {
             const isUser = msg.sender === 'user';
             return (
@@ -218,6 +226,24 @@ export const ChatView: React.FC = () => {
               </div>
             );
           })}
+
+          {/* Animated Typing Indicator */}
+          {isTyping && (
+            <div className="flex gap-3 justify-start animate-in fade-in duration-200">
+              <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-500/40 flex items-center justify-center text-emerald-300 flex-shrink-0 mt-1">
+                🌱
+              </div>
+              <div className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/25 text-slate-100 rounded-tl-none backdrop-blur-md flex items-center gap-2">
+                <span className="text-xs text-emerald-300/90 font-medium">Sprout is reflecting</span>
+                <div className="flex items-center gap-1 ml-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
 
