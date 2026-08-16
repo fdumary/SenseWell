@@ -104,10 +104,10 @@ export const ChatView: React.FC = () => {
         </div>
 
         <h1 className="font-pixel text-xl font-bold text-[#2D3748] tracking-wide mb-0.5">
-          Fern &amp; Lumi
+          Lumi
         </h1>
         <p className="text-xs text-[#718096] font-semibold mb-3">
-          Your Forest &amp; AI Wellness Companion
+          Your Forest &amp; Wellness Companion
         </p>
 
         {/* Mood Badge */}
@@ -123,7 +123,7 @@ export const ChatView: React.FC = () => {
             Did you know?
           </div>
           <p className="text-xs font-bold text-[#2D3748] flex items-center gap-1.5">
-            <span>Fern waters the garden whenever you take a break.</span>
+            <span>Lumi waters the garden whenever you take a break.</span>
             <span className="text-[#60A5FA]">💧</span>
           </p>
         </div>
@@ -213,11 +213,10 @@ export const ChatView: React.FC = () => {
                     </div>
                   )}
                   <div
-                    className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[80%] ${
-                      isUser
-                        ? 'bg-[#4A7C59] text-white font-semibold rounded-tr-none'
-                        : 'bg-[#FAF7F0] border border-[#E8E3D7] text-[#2D3748] rounded-tl-none font-medium'
-                    }`}
+                    className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[80%] ${isUser
+                      ? 'bg-[#4A7C59] text-white font-semibold rounded-tr-none'
+                      : 'bg-[#FAF7F0] border border-[#E8E3D7] text-[#2D3748] rounded-tl-none font-medium'
+                      }`}
                   >
                     {msg.text}
                   </div>
